@@ -952,15 +952,15 @@ export default function Home() {
     return (
       <Card withBorder radius="md" mb="md">
         <Card.Section withBorder inheritPadding py="xs">
-          <Group position="apart">
-            <Text weight={500}>Database Recovery Status</Text>
+          <Group justify="apart">
+            <Text fw={500}>Database Recovery Status</Text>
             <Badge color={recoveryInfo.is_corrupted ? "red" : "green"}>
               {recoveryInfo.is_corrupted ? "Corrupted" : "Valid"}
             </Badge>
           </Group>
         </Card.Section>
 
-        <Stack spacing="xs" mt="md">
+        <Stack gap="xs" mt="md">
           {recoveryInfo.corruption_details && recoveryInfo.corruption_details.length > 0 && (
             <Alert title="Corruption Details" color="red">
               <List>
@@ -973,8 +973,8 @@ export default function Home() {
 
           {recoveryInfo.recovered_tables.length > 0 && (
             <Box>
-              <Text size="sm" weight={500} mb="xs">Recovered Tables</Text>
-              <Group spacing="xs">
+              <Text size="sm" fw={500} mb="xs">Recovered Tables</Text>
+              <Group gap="xs">
                 {recoveryInfo.recovered_tables.map((table) => (
                   <Badge key={table} color="blue">{table}</Badge>
                 ))}
@@ -990,7 +990,7 @@ export default function Home() {
 
           {recoveryInfo.error_log.length > 0 && (
             <Box>
-              <Text size="sm" weight={500} mb="xs">Error Log</Text>
+              <Text size="sm" fw={500} mb="xs">Error Log</Text>
               <List size="sm">
                 {recoveryInfo.error_log.map((error, index) => (
                   <List.Item key={index}>{error}</List.Item>
