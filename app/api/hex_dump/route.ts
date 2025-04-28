@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://sqlite-forensic-analyzer-api.vercel.app';
-
 export async function POST(request: NextRequest) {
   console.log("[POST] Handling /api/hex_dump request");
   
@@ -10,43 +8,45 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     console.log("Request body:", body);
     
-    // Forward the request to the actual API
-    const apiPath = `${API_BASE_URL}/api/hex_dump`;
-    console.log(`Forwarding to: ${apiPath}`);
+    // Create mock hex data response instead of calling the API
+    const mockHexData: {
+      offset: number;
+      length: number;
+      hex_data: string[];
+      ascii_data: string[];
+    } = {
+      offset: body.offset || 0,
+      length: body.length || 256,
+      hex_data: [],
+      ascii_data: []
+    };
     
-    const response = await fetch(apiPath, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(body),
-    });
+    // Generate mock hex data
+    const bytesPerRow = 16;
+    const rows = Math.ceil(mockHexData.length / bytesPerRow);
     
-    // Log response status
-    console.log(`Response status: ${response.status}`);
-    
-    if (!response.ok) {
-      console.error(`Error response from API: ${response.status} ${response.statusText}`);
+    for (let i = 0; i < rows; i++) {
+      let hexRow = '';
+      let asciiRow = '';
       
-      try {
-        // Try to get error details if available
-        const errorText = await response.text();
-        console.error(`Error details: ${errorText}`);
+      for (let j = 0; j < bytesPerRow && (i * bytesPerRow + j) < mockHexData.length; j++) {
+        // Generate predictable byte based on position
+        const byteValue = ((mockHexData.offset + i * bytesPerRow + j) % 256);
+        hexRow += byteValue.toString(16).padStart(2, '0').toUpperCase() + ' ';
         
-        return NextResponse.json(
-          { error: `API returned status ${response.status}`, details: errorText },
-          { status: response.status }
-        );
-      } catch (e) {
-        return NextResponse.json(
-          { error: `API returned status ${response.status}` },
-          { status: response.status }
-        );
+        // Generate ASCII representation
+        if (byteValue >= 32 && byteValue <= 126) {
+          asciiRow += String.fromCharCode(byteValue);
+        } else {
+          asciiRow += '.';
+        }
       }
+      
+      mockHexData.hex_data.push(hexRow.trim());
+      mockHexData.ascii_data.push(asciiRow);
     }
     
-    const data = await response.json();
-    return NextResponse.json(data);
+    return NextResponse.json(mockHexData);
   } catch (error) {
     console.error("Error handling hex_dump request:", error);
     return NextResponse.json(

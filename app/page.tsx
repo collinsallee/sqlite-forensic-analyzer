@@ -270,8 +270,8 @@ export default function Home() {
       const formData = new FormData();
       formData.append('file', file);
 
-      // Upload the file and process it - use the correct API endpoint with a purely relative path
-      const response = await fetch('/api/analyze-database', {
+      // Use the direct-analyze endpoint which doesn't rely on external API
+      const response = await fetch('/api/direct-analyze', {
         method: 'POST',
         body: formData,
       });
