@@ -16,7 +16,7 @@ export async function GET(
   
   const apiPath = `${API_BASE_URL}/api/${route}${queryString ? `?${queryString}` : ''}`;
   
-  console.log(`Proxying GET request to: ${apiPath}`);
+  console.log(`[GET] Proxying request to: ${apiPath}`);
   
   try {
     const response = await fetch(apiPath, {
@@ -25,12 +25,32 @@ export async function GET(
       },
     });
     
-    const data = await response.json();
-    return NextResponse.json(data);
+    if (!response.ok) {
+      console.error(`Error response from API: ${response.status} ${response.statusText}`);
+      return NextResponse.json(
+        { error: `API returned status ${response.status}` },
+        { status: response.status }
+      );
+    }
+    
+    const contentType = response.headers.get('content-type') || '';
+    
+    if (contentType.includes('application/json')) {
+      const data = await response.json();
+      return NextResponse.json(data);
+    } else {
+      const text = await response.text();
+      return new NextResponse(text, {
+        status: response.status,
+        headers: {
+          'Content-Type': contentType,
+        },
+      });
+    }
   } catch (error) {
     console.error(`Error proxying to ${apiPath}:`, error);
     return NextResponse.json(
-      { error: 'Failed to fetch data from API' },
+      { error: 'Failed to fetch data from API', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }
@@ -43,7 +63,7 @@ export async function POST(
   const route = params.route?.join('/') || '';
   const apiPath = `${API_BASE_URL}/api/${route}`;
   
-  console.log(`Proxying POST request to: ${apiPath}`);
+  console.log(`[POST] Proxying request to: ${apiPath}`);
   
   try {
     // Get the content type to determine how to handle the request body
@@ -68,6 +88,14 @@ export async function POST(
       body: clonedRequest.body,
     });
     
+    if (!response.ok) {
+      console.error(`Error response from API: ${response.status} ${response.statusText}`);
+      return NextResponse.json(
+        { error: `API returned status ${response.status}` },
+        { status: response.status }
+      );
+    }
+    
     // Check if the response is JSON
     const contentTypeHeader = response.headers.get('content-type') || '';
     if (contentTypeHeader.includes('application/json')) {
@@ -86,7 +114,7 @@ export async function POST(
   } catch (error) {
     console.error(`Error proxying POST to ${apiPath}:`, error);
     return NextResponse.json(
-      { error: 'Failed to fetch data from API' },
+      { error: 'Failed to fetch data from API', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }

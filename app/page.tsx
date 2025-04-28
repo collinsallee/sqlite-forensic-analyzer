@@ -270,8 +270,8 @@ export default function Home() {
       const formData = new FormData();
       formData.append('file', file);
 
-      // Upload the file and process it - use the correct API endpoint
-      const response = await fetch(`${API_BASE_URL}/api/analyze-database`, {
+      // Upload the file and process it - use the correct API endpoint with a purely relative path
+      const response = await fetch('/api/analyze-database', {
         method: 'POST',
         body: formData,
       });
@@ -330,7 +330,7 @@ export default function Home() {
       
       // Get file content in chunks to analyze using only the fileId
       // Try to get file size first
-      const sizeResponse = await fetch(`${API_BASE_URL}/api/files/${fileId}`, {
+      const sizeResponse = await fetch(`/api/files/${fileId}`, {
         method: 'GET',
       }).catch(() => null);
       
@@ -350,15 +350,15 @@ export default function Home() {
       const hexDumps = [];
       for (let i = 0; i < numChunks; i++) {
         const offset = i * chunkSize;
-        const hexResponse = await fetch(`${API_BASE_URL}/api/hex_dump`, {
+        const hexResponse = await fetch(`/api/hex_dump`, {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
+            'Content-Type': 'application/json',
           },
-          body: new URLSearchParams({
+          body: JSON.stringify({
             file_id: fileId,
-            offset: offset.toString(),
-            length: chunkSize.toString(),
+            offset: offset,
+            length: chunkSize,
           }),
         });
         
@@ -1008,7 +1008,7 @@ export default function Home() {
     const loadBackups = async () => {
       try {
         setBackupsLoading(true);
-        const response = await fetch(`${API_BASE_URL}/api/backups`);
+        const response = await fetch(`/api/backups`);
         if (response.ok) {
           const data = await response.json();
           setBackups(data);
@@ -1033,7 +1033,7 @@ export default function Home() {
     const restoreBackup = async (filename: string) => {
       try {
         setBackupsLoading(true);
-        const response = await fetch(`${API_BASE_URL}/api/backups/${filename}`);
+        const response = await fetch(`/api/backups/${filename}`);
         if (response.ok) {
           const data = await response.json();
           setResults(data);
