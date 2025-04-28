@@ -16,6 +16,8 @@ export async function GET(
   
   const apiPath = `${API_BASE_URL}/api/${route}${queryString ? `?${queryString}` : ''}`;
   
+  console.log(`Proxying GET request to: ${apiPath}`);
+  
   try {
     const response = await fetch(apiPath, {
       headers: {
@@ -39,35 +41,50 @@ export async function POST(
   { params }: { params: { route: string[] } }
 ) {
   const route = params.route?.join('/') || '';
+  const apiPath = `${API_BASE_URL}/api/${route}`;
+  
+  console.log(`Proxying POST request to: ${apiPath}`);
   
   try {
-    // Get the request body
+    // Get the content type to determine how to handle the request body
     const contentType = request.headers.get('content-type') || '';
-    let body: any;
     
-    if (contentType.includes('multipart/form-data')) {
-      // For file uploads, we need to forward the FormData
-      const formData = await request.formData();
-      body = formData;
-    } else {
-      // For JSON data
-      body = await request.json().catch(() => ({}));
-    }
+    // Clone the request to create a new one we can forward
+    // This is important for file uploads with FormData
+    const clonedRequest = request.clone();
     
-    const apiPath = `${API_BASE_URL}/api/${route}`;
-    
+    // Forward the request to the API server
     const response = await fetch(apiPath, {
       method: 'POST',
-      headers: contentType.includes('multipart/form-data') 
-        ? {} // Let the browser set the correct content-type with boundary for FormData
-        : { 'Content-Type': 'application/json' },
-      body: contentType.includes('multipart/form-data') ? body : JSON.stringify(body),
+      headers: {
+        // Forward all headers except host
+        ...Object.fromEntries(
+          Array.from(request.headers.entries()).filter(([key]) => 
+            key.toLowerCase() !== 'host'
+          )
+        ),
+      },
+      // Pass through the original request body
+      body: clonedRequest.body,
     });
     
-    const data = await response.json();
-    return NextResponse.json(data);
+    // Check if the response is JSON
+    const contentTypeHeader = response.headers.get('content-type') || '';
+    if (contentTypeHeader.includes('application/json')) {
+      const data = await response.json();
+      return NextResponse.json(data);
+    } else {
+      // For non-JSON responses
+      const data = await response.text();
+      return new NextResponse(data, {
+        status: response.status,
+        headers: {
+          'Content-Type': contentTypeHeader,
+        },
+      });
+    }
   } catch (error) {
-    console.error(`Error proxying POST to /api/${route}:`, error);
+    console.error(`Error proxying POST to ${apiPath}:`, error);
     return NextResponse.json(
       { error: 'Failed to fetch data from API' },
       { status: 500 }

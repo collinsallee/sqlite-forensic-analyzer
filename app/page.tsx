@@ -274,8 +274,6 @@ export default function Home() {
       const response = await fetch(`${API_BASE_URL}/api/analyze-database`, {
         method: 'POST',
         body: formData,
-        mode: 'cors',
-        credentials: 'include',
       });
 
       if (!response.ok) {
