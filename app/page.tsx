@@ -60,6 +60,7 @@ import {
 import { Notifications, notifications } from '@mantine/notifications';
 import dynamic from 'next/dynamic';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid, Legend } from 'recharts';
+import { API_BASE_URL } from './config';
 
 // Dynamically import the HexEditor component to avoid SSR issues
 const HexEditor = dynamic(() => import('./components/HexEditor'), {
@@ -270,7 +271,7 @@ export default function Home() {
       formData.append('file', file);
 
       // Upload the file and process it - use the correct API endpoint
-      const response = await fetch('http://localhost:8000/api/analyze-database', {
+      const response = await fetch(`${API_BASE_URL}/api/analyze-database`, {
         method: 'POST',
         body: formData,
         mode: 'cors',
@@ -331,7 +332,7 @@ export default function Home() {
       
       // Get file content in chunks to analyze using only the fileId
       // Try to get file size first
-      const sizeResponse = await fetch(`http://localhost:8000/api/files/${fileId}`, {
+      const sizeResponse = await fetch(`${API_BASE_URL}/api/files/${fileId}`, {
         method: 'GET',
       }).catch(() => null);
       
@@ -351,7 +352,7 @@ export default function Home() {
       const hexDumps = [];
       for (let i = 0; i < numChunks; i++) {
         const offset = i * chunkSize;
-        const hexResponse = await fetch(`http://localhost:8000/api/hex_dump`, {
+        const hexResponse = await fetch(`${API_BASE_URL}/api/hex_dump`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
@@ -1004,91 +1005,114 @@ export default function Home() {
 
   const renderBackupSection = () => {
     const [backups, setBackups] = useState<any[]>([]);
-    const [loading, setLoading] = useState(false);
+    const [backupsLoading, setBackupsLoading] = useState(false);
 
     const loadBackups = async () => {
       try {
-        setLoading(true);
-        const response = await fetch('http://localhost:8000/api/backups');
-        const data = await response.json();
-        setBackups(data);
+        setBackupsLoading(true);
+        const response = await fetch(`${API_BASE_URL}/api/backups`);
+        if (response.ok) {
+          const data = await response.json();
+          setBackups(data);
+        } else {
+          notifications.show({
+            title: 'Error',
+            message: 'Failed to load backups',
+            color: 'red',
+          });
+        }
       } catch (error) {
         notifications.show({
           title: 'Error',
-          message: 'Failed to load backups',
+          message: error instanceof Error ? error.message : 'Failed to load backups',
           color: 'red',
         });
       } finally {
-        setLoading(false);
+        setBackupsLoading(false);
       }
     };
 
     const restoreBackup = async (filename: string) => {
       try {
-        const response = await fetch(`http://localhost:8000/api/backups/${filename}`);
-        const data = await response.json();
-        setResults(data);
-        notifications.show({
-          title: 'Success',
-          message: 'Backup restored successfully',
-          color: 'green',
-        });
+        setBackupsLoading(true);
+        const response = await fetch(`${API_BASE_URL}/api/backups/${filename}`);
+        if (response.ok) {
+          const data = await response.json();
+          setResults(data);
+          notifications.show({
+            title: 'Success',
+            message: `Restored backup: ${filename}`,
+            color: 'green',
+          });
+        } else {
+          notifications.show({
+            title: 'Error',
+            message: 'Failed to restore backup',
+            color: 'red',
+          });
+        }
       } catch (error) {
         notifications.show({
           title: 'Error',
-          message: 'Failed to restore backup',
+          message: error instanceof Error ? error.message : 'Failed to restore backup',
           color: 'red',
         });
+      } finally {
+        setBackupsLoading(false);
       }
     };
 
-    return (
-      <Card withBorder radius="md">
-        <Card.Section withBorder inheritPadding py="xs">
-          <Group position="apart">
-            <Text weight={500}>Analysis Backups</Text>
-            <Button
-              variant="light"
-              size="xs"
-              onClick={loadBackups}
-              loading={loading}
-            >
-              Refresh
-            </Button>
-          </Group>
-        </Card.Section>
+    useEffect(() => {
+      if (selectedTabValue === 'backups') {
+        loadBackups();
+      }
+    }, [selectedTabValue]);
 
-        <Stack spacing="xs" mt="md">
+    return (
+      <Card withBorder>
+        <Group justify="space-between">
+          <Text fw={700}>Backup Management</Text>
+          <Button
+            variant="light"
+            size="xs"
+            onClick={loadBackups}
+            loading={backupsLoading}
+          >
+            Refresh
+          </Button>
+        </Group>
+
+        <Stack gap="md" mt="md">
           {backups.length === 0 ? (
-            <Text size="sm" color="dimmed">No backups available</Text>
+            <Text c="dimmed">No backups available</Text>
           ) : (
             <Table>
-              <thead>
-                <tr>
-                  <th>Filename</th>
-                  <th>Created</th>
-                  <th>Size</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
+              <Table.Thead>
+                <Table.Tr>
+                  <Table.Th>Filename</Table.Th>
+                  <Table.Th>Created</Table.Th>
+                  <Table.Th>Size</Table.Th>
+                  <Table.Th>Actions</Table.Th>
+                </Table.Tr>
+              </Table.Thead>
+              <Table.Tbody>
                 {backups.map((backup) => (
-                  <tr key={backup.filename}>
-                    <td>{backup.filename}</td>
-                    <td>{new Date(backup.created).toLocaleString()}</td>
-                    <td>{(backup.size / 1024).toFixed(2)} KB</td>
-                    <td>
+                  <Table.Tr key={backup.filename}>
+                    <Table.Td>{backup.filename}</Table.Td>
+                    <Table.Td>{new Date(backup.created).toLocaleString()}</Table.Td>
+                    <Table.Td>{formatFileSize(backup.size)}</Table.Td>
+                    <Table.Td>
                       <Button
-                        variant="light"
                         size="xs"
+                        variant="light"
                         onClick={() => restoreBackup(backup.filename)}
                       >
                         Restore
                       </Button>
-                    </td>
-                  </tr>
+                    </Table.Td>
+                  </Table.Tr>
                 ))}
-              </tbody>
+              </Table.Tbody>
             </Table>
           )}
         </Stack>

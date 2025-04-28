@@ -5,6 +5,7 @@ import { Box, Text, TextInput, Button, Group, Table, ScrollArea, Code, Grid, Num
 import { IconRefresh, IconChevronLeft, IconChevronRight, IconEdit, IconCheck, IconX, IconArrowLeft, IconArrowRight } from '@tabler/icons-react';
 import DataInspector from './DataInspector';
 import SearchTools from './SearchTools';
+import { API_BASE_URL } from '../config';
 
 interface HexData {
   offset: string;
@@ -72,7 +73,7 @@ export default function HexEditor({ fileId, initialOffset = null }: HexEditorPro
     try {
       console.log("Loading hex data with file ID:", fileId, "at offset:", offset);
       
-      const response = await fetch('http://localhost:8000/api/hex_dump', {
+      const response = await fetch(`${API_BASE_URL}/api/hex_dump`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -280,7 +281,7 @@ export default function HexEditor({ fileId, initialOffset = null }: HexEditorPro
     setIsLoading(true);
     
     try {
-      const response = await fetch('http://localhost:8000/api/edit_hex', {
+      const response = await fetch(`${API_BASE_URL}/api/edit_hex`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
