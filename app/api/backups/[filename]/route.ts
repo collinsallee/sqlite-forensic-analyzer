@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+type BackupParams = {
+  filename: string;
+};
+
 export async function GET(
   request: NextRequest,
-  { params }: { params: { filename: string } }
+  context: { params: Promise<BackupParams> }
 ) {
+  const params = await context.params;
   console.log(`[GET] Handling /api/backups/${params.filename} request`);
   
   try {

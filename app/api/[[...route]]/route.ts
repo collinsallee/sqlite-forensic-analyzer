@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+type RouteParams = {
+  route?: string[];
+};
+
 export async function GET(
   request: NextRequest,
-  { params }: { params: { route: string[] } }
+  context: { params: Promise<RouteParams> }
 ) {
+  const params = await context.params;
   const path = params.route?.join('/') || '';
   
   return NextResponse.json({
@@ -14,8 +19,9 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { route: string[] } }
+  context: { params: Promise<RouteParams> }
 ) {
+  const params = await context.params;
   const path = params.route?.join('/') || '';
   
   return NextResponse.json({
@@ -26,8 +32,9 @@ export async function POST(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { route: string[] } }
+  context: { params: Promise<RouteParams> }
 ) {
+  const params = await context.params;
   const path = params.route?.join('/') || '';
   
   return NextResponse.json({
@@ -38,8 +45,9 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { route: string[] } }
+  context: { params: Promise<RouteParams> }
 ) {
+  const params = await context.params;
   const path = params.route?.join('/') || '';
   
   return NextResponse.json({

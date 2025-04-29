@@ -39,3 +39,15 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# backend
+backend/app/main.py
+backend/app/main.pyc
+backend/app/main.pyo
+backend/app/main.pyd
+backend/app/main.pyw
+backend/app/main.pyz
+backend/forensic_analyzer.log
+backend/app/__pycache__
+# dist
+dist/

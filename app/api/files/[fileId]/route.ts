@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+type FileParams = {
+  fileId: string;
+};
+
 export async function GET(
   request: NextRequest,
-  { params }: { params: { fileId: string } }
+  context: { params: Promise<FileParams> }
 ) {
+  const params = await context.params;
   console.log(`[GET] Handling /api/files/${params.fileId} request`);
   
   try {

@@ -10,17 +10,18 @@ const getApiBaseUrl = () => {
   }
   
   // In Node.js environment (SSR), use the full URL from environment variable
-  return process.env.NEXT_PUBLIC_API_URL || 'https://sqlite-forensic-analyzer-api.vercel.app';
+  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 };
 
 // Prevents issue with the app trying to access window during SSR
 let apiBaseUrl = '';
 if (typeof window === 'undefined') {
   // Server-side rendering
-  apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://sqlite-forensic-analyzer-api.vercel.app';
+  apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 } else {
   // Client-side rendering
   apiBaseUrl = getApiBaseUrl();
 }
 
-export const API_BASE_URL = apiBaseUrl; 
+// export const API_BASE_URL = apiBaseUrl; 
+export const API_BASE_URL = 'http://localhost:8000';
