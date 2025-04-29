@@ -150,25 +150,9 @@ interface AnalysisResponse {
   error_log: string[];
 }
 
-interface OptimizationResponse {
-  suggestions: Array<{
-    type: string;
-    description: string;
-    sql?: string;
-    table?: string;
-    tools?: string[];
-  }>;
-  potential_improvements: Array<{
-    type: string;
-    description: string;
-    impact: string;
-  }>;
-}
-
 interface ProcessResponse {
   validation: ValidationResponse;
   analysis: AnalysisResponse | null;
-  optimization: OptimizationResponse | null;
 }
 
 interface HexDumpResponse {
@@ -846,106 +830,6 @@ export default function Home() {
     );
   };
 
-  const renderOptimizationSection = () => {
-    if (!results || !results.optimization) return null;
-    
-    const { optimization } = results;
-    
-    // Make sure suggestions and potential_improvements exist and default to empty arrays if not
-    const suggestions = optimization.suggestions || [];
-    const improvements = optimization.potential_improvements || [];
-    
-    return (
-      <Paper p="md" withBorder>
-        <Title order={3} mb="md">Optimization Suggestions</Title>
-        
-        <Accordion>
-          <Accordion.Item value="suggestions">
-            <Accordion.Control>
-              <Group>
-                <IconSettings size={18} />
-                <Text fw={600}>Suggested Optimizations ({suggestions.length})</Text>
-              </Group>
-            </Accordion.Control>
-            <Accordion.Panel>
-              <Table>
-                <Table.Thead>
-                  <Table.Tr>
-                    <Table.Th>Type</Table.Th>
-                    <Table.Th>Description</Table.Th>
-                    <Table.Th>SQL</Table.Th>
-                  </Table.Tr>
-                </Table.Thead>
-                <Table.Tbody>
-                  {suggestions.map((sugg, idx) => (
-                    <Table.Tr key={idx}>
-                      <Table.Td>{sugg?.type || 'Unknown'}</Table.Td>
-                      <Table.Td>{sugg?.description || 'No description provided'}</Table.Td>
-                      <Table.Td>
-                        {sugg?.sql ? (
-                          <Group>
-                            <Code block>{sugg.sql}</Code>
-                            <CopyButton value={sugg.sql}>
-                              {({ copied, copy }) => (
-                                <ActionIcon color={copied ? 'green' : 'blue'} onClick={copy}>
-                                  {copied ? <IconCheck size={16} /> : <IconCopy size={16} />}
-                                </ActionIcon>
-                              )}
-                            </CopyButton>
-                          </Group>
-                        ) : (
-                          sugg?.tools && sugg.tools.length > 0 ? 'Suggested tools: ' + sugg.tools.join(', ') : '—'
-                        )}
-                      </Table.Td>
-                    </Table.Tr>
-                  ))}
-                </Table.Tbody>
-              </Table>
-            </Accordion.Panel>
-          </Accordion.Item>
-          
-          <Accordion.Item value="improvements">
-            <Accordion.Control>
-              <Group>
-                <IconChartBar size={18} />
-                <Text fw={600}>Potential Improvements ({improvements.length})</Text>
-              </Group>
-            </Accordion.Control>
-            <Accordion.Panel>
-              <Table>
-                <Table.Thead>
-                  <Table.Tr>
-                    <Table.Th>Type</Table.Th>
-                    <Table.Th>Description</Table.Th>
-                    <Table.Th>Impact</Table.Th>
-                  </Table.Tr>
-                </Table.Thead>
-                <Table.Tbody>
-                  {improvements.map((imp, idx) => (
-                    <Table.Tr key={idx}>
-                      <Table.Td>{imp?.type || 'Unknown'}</Table.Td>
-                      <Table.Td>{imp?.description || 'No description provided'}</Table.Td>
-                      <Table.Td>
-                        <Badge
-                          color={
-                            imp?.impact === 'high' ? 'red' : 
-                            imp?.impact === 'medium' ? 'yellow' : 'blue'
-                          }
-                        >
-                          {imp?.impact || 'low'}
-                        </Badge>
-                      </Table.Td>
-                    </Table.Tr>
-                  ))}
-                </Table.Tbody>
-              </Table>
-            </Accordion.Panel>
-          </Accordion.Item>
-        </Accordion>
-      </Paper>
-    );
-  };
-
   const renderRecoveryInfo = (recoveryInfo: DatabaseRecoveryInfo) => {
     return (
       <Card withBorder radius="md" mb="md">
@@ -1147,9 +1031,6 @@ export default function Home() {
             {renderDatabaseStructure()}
           </Tabs.Panel>
 
-          <Tabs.Panel value="technical" pt="xs">
-            {renderOptimizationSection()}
-          </Tabs.Panel>
 
           <Tabs.Panel value="recommendations" pt="xs">
             {renderForensicSection()}
@@ -1503,12 +1384,6 @@ export default function Home() {
               Database Structure
             </Tabs.Tab>
             <Tabs.Tab
-              value="optimization"
-              leftSection={<IconSettings size={16} />}
-            >
-              Optimization
-            </Tabs.Tab>
-            <Tabs.Tab
               value="hexeditor"
               leftSection={<IconHexagon size={16} />}
             >
@@ -1526,7 +1401,6 @@ export default function Home() {
             {selectedTabValue === 'validation' && renderValidationSection()}
             {selectedTabValue === 'forensic' && renderForensicSection()}
             {selectedTabValue === 'structure' && renderDatabaseStructure()}
-            {selectedTabValue === 'optimization' && renderOptimizationSection()}
             {selectedTabValue === 'hexeditor' && fileId && (
               <HexEditor fileId={fileId} initialOffset={jumpToOffset || 0} />
             )}

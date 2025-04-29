@@ -51,3 +51,4 @@ backend/forensic_analyzer.log
 backend/app/__pycache__
 # dist
 dist/
+backend/forensic_analyzer.log

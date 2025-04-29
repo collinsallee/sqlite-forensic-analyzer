@@ -160,3 +160,63 @@ application_id
     For further information visit https://errors.pydantic.dev/2.1/v/string_type
 2025-04-29 02:09:09,156 - app.main - ERROR - Error in database analysis: 
 2025-04-29 02:09:09,156 - app.main - ERROR - Error creating backup: 
+2025-04-29 02:15:01,940 - app.main - ERROR - Error extracting metadata: 1 validation error for ForensicMetadata
+application_id
+  Input should be a valid string [type=string_type, input_value=0, input_type=int]
+    For further information visit https://errors.pydantic.dev/2.1/v/string_type
+2025-04-29 02:15:01,941 - app.main - ERROR - Error in database analysis: 
+2025-04-29 02:15:01,941 - app.main - ERROR - Error creating backup: 
+2025-04-29 02:17:35,433 - app.main - ERROR - Error extracting metadata: 1 validation error for ForensicMetadata
+application_id
+  Input should be a valid string [type=string_type, input_value=0, input_type=int]
+    For further information visit https://errors.pydantic.dev/2.1/v/string_type
+2025-04-29 02:17:35,433 - app.main - ERROR - Error in database analysis: 
+2025-04-29 02:17:35,433 - app.main - ERROR - Error creating backup: 
+2025-04-29 02:31:20,187 - app.main - ERROR - Error extracting metadata: 1 validation error for ForensicMetadata
+application_id
+  Input should be a valid string [type=string_type, input_value=0, input_type=int]
+    For further information visit https://errors.pydantic.dev/2.1/v/string_type
+2025-04-29 02:31:20,188 - app.main - ERROR - Error in database analysis: 
+2025-04-29 02:31:20,188 - app.main - ERROR - Error creating backup: 
+2025-04-29 02:34:05,820 - app.main - ERROR - Error extracting metadata: 1 validation error for ForensicMetadata
+application_id
+  Input should be a valid string [type=string_type, input_value=0, input_type=int]
+    For further information visit https://errors.pydantic.dev/2.1/v/string_type
+2025-04-29 02:34:05,820 - app.main - ERROR - Error in database analysis: 
+2025-04-29 02:34:05,820 - app.main - ERROR - Error creating backup: 
+2025-04-29 02:34:51,953 - app.main - ERROR - Error extracting metadata: 1 validation error for ForensicMetadata
+application_id
+  Input should be a valid string [type=string_type, input_value=0, input_type=int]
+    For further information visit https://errors.pydantic.dev/2.1/v/string_type
+2025-04-29 02:34:51,953 - app.main - ERROR - Error in database analysis: 
+2025-04-29 02:34:51,953 - app.main - ERROR - Error creating backup: 
+2025-04-29 02:36:04,611 - app.main - ERROR - Error extracting metadata: 1 validation error for ForensicMetadata
+application_id
+  Input should be a valid string [type=string_type, input_value=0, input_type=int]
+    For further information visit https://errors.pydantic.dev/2.1/v/string_type
+2025-04-29 02:36:04,611 - app.main - ERROR - Error in database analysis: 
+2025-04-29 02:36:04,611 - app.main - ERROR - Error creating backup: 
+2025-04-29 02:38:01,541 - app.main - ERROR - Error extracting metadata: 1 validation error for ForensicMetadata
+application_id
+  Input should be a valid string [type=string_type, input_value=0, input_type=int]
+    For further information visit https://errors.pydantic.dev/2.1/v/string_type
+2025-04-29 02:38:01,541 - app.main - ERROR - Error in database analysis: 
+2025-04-29 02:38:01,541 - app.main - ERROR - Error creating backup: 
+2025-04-29 02:38:15,295 - app.main - ERROR - Error extracting metadata: 1 validation error for ForensicMetadata
+application_id
+  Input should be a valid string [type=string_type, input_value=0, input_type=int]
+    For further information visit https://errors.pydantic.dev/2.1/v/string_type
+2025-04-29 02:38:15,295 - app.main - ERROR - Error in database analysis: 
+2025-04-29 02:38:15,295 - app.main - ERROR - Error creating backup: 
+2025-04-29 02:41:57,726 - app.main - ERROR - Error extracting metadata: 1 validation error for ForensicMetadata
+application_id
+  Input should be a valid string [type=string_type, input_value=0, input_type=int]
+    For further information visit https://errors.pydantic.dev/2.1/v/string_type
+2025-04-29 02:41:57,726 - app.main - ERROR - Error in database analysis: 
+2025-04-29 02:41:57,726 - app.main - ERROR - Error creating backup: 
+2025-04-29 02:42:47,146 - app.main - ERROR - Error extracting metadata: 1 validation error for ForensicMetadata
+application_id
+  Input should be a valid string [type=string_type, input_value=0, input_type=int]
+    For further information visit https://errors.pydantic.dev/2.1/v/string_type
+2025-04-29 02:42:47,146 - app.main - ERROR - Error in database analysis: 
+2025-04-29 02:42:47,146 - app.main - ERROR - Error creating backup: 

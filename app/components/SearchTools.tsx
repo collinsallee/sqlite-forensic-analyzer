@@ -14,7 +14,8 @@ import {
   ActionIcon,
   Badge,
   Tooltip,
-  Divider
+  Divider,
+  Modal
 } from '@mantine/core';
 import { 
   IconSearch, 
@@ -67,6 +68,8 @@ const SearchTools: React.FC<SearchToolsProps> = ({ fileId, currentOffset, onGoTo
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [activeTab, setActiveTab] = useState<string | null>('search');
   const [targetOffset, setTargetOffset] = useState('');
+  const [showBookmarkModal, setShowBookmarkModal] = useState(false);
+  const [bookmarkLabel, setBookmarkLabel] = useState('');
 
   // Load bookmarks and history from localStorage
   useEffect(() => {
@@ -114,21 +117,27 @@ const SearchTools: React.FC<SearchToolsProps> = ({ fileId, currentOffset, onGoTo
 
   const addBookmark = () => {
     if (fileId && currentOffset !== undefined) {
-      const label = prompt('Enter a label for this bookmark:', `Offset 0x${currentOffset.toString(16).toUpperCase()}`);
-      if (label) {
-        const newBookmark: Bookmark = {
-          id: Date.now().toString(),
-          offset: currentOffset,
-          label: label,
-          timestamp: Date.now()
-        };
-        setBookmarks([newBookmark, ...bookmarks]);
-        notifications.show({
-          title: 'Bookmark Added',
-          message: `Added bookmark at offset 0x${currentOffset.toString(16).toUpperCase()}`,
-          color: 'blue'
-        });
-      }
+      setBookmarkLabel(`Offset 0x${currentOffset.toString(16).toUpperCase()}`);
+      setShowBookmarkModal(true);
+    }
+  };
+
+  const handleBookmarkSave = () => {
+    if (bookmarkLabel && fileId && currentOffset !== undefined) {
+      const newBookmark: Bookmark = {
+        id: Date.now().toString(),
+        offset: currentOffset,
+        label: bookmarkLabel,
+        timestamp: Date.now()
+      };
+      setBookmarks([newBookmark, ...bookmarks]);
+      notifications.show({
+        title: 'Bookmark Added',
+        message: `Added bookmark at offset 0x${currentOffset.toString(16).toUpperCase()}`,
+        color: 'blue'
+      });
+      setShowBookmarkModal(false);
+      setBookmarkLabel('');
     }
   };
 
@@ -173,7 +182,7 @@ const SearchTools: React.FC<SearchToolsProps> = ({ fileId, currentOffset, onGoTo
         formData.append('pattern', hexArray.join(''));
       }
 
-      const response = await fetch('/api/search', {
+      const response = await fetch('http://localhost:8000/api/search', {
         method: 'POST',
         body: formData
       });
@@ -319,7 +328,7 @@ const SearchTools: React.FC<SearchToolsProps> = ({ fileId, currentOffset, onGoTo
                 Bookmark Current Offset
               </Button>
 
-              {searchResults.length > 0 && (
+              {searchResults?.length > 0 && (
                 <Box>
                   <Text fw={500} mb="xs">Search Results ({searchResults.length})</Text>
                   <Stack gap="xs">
@@ -419,6 +428,30 @@ const SearchTools: React.FC<SearchToolsProps> = ({ fileId, currentOffset, onGoTo
             )}
           </Tabs.Panel>
         </Tabs>
+
+        <Modal
+          opened={showBookmarkModal}
+          onClose={() => setShowBookmarkModal(false)}
+          title="Add Bookmark"
+          centered
+        >
+          <Stack>
+            <TextInput
+              label="Bookmark Label"
+              value={bookmarkLabel}
+              onChange={(e) => setBookmarkLabel(e.target.value)}
+              placeholder="Enter a label for this bookmark"
+            />
+            <Group justify="flex-end" mt="md">
+              <Button variant="default" onClick={() => setShowBookmarkModal(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleBookmarkSave}>
+                Save Bookmark
+              </Button>
+            </Group>
+          </Stack>
+        </Modal>
       </Stack>
     </Paper>
   );

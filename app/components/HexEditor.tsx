@@ -862,7 +862,7 @@ export default function HexEditor({ fileId, initialOffset = null }: HexEditorPro
         <Grid.Col span={{ base: 12, md: 4 }}>
           <SearchTools 
             fileId={fileId} 
-            currentOffset={selectedRange ? selectedRange.start : 0}
+            currentOffset={selectedRange?.start ?? offset}
             onGoToOffset={(offset) => {
               setSelectedRange({ start: offset, end: offset + 15 });
               setOffset(offset);
