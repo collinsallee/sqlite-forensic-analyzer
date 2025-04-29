@@ -1423,8 +1423,10 @@ export default function Home() {
       <Notifications />
       
       <Paper p="lg" radius="md" withBorder mb="xl">
-        <Title order={1} ta="center" mb="md">SQLite Forensic Artifact Analyzer</Title>
-        <Text ta="center" size="lg" c="dimmed" mb="lg">
+        <Title order={1} ta="center" mb="md" style={{ fontSize: '2.5rem', fontWeight: 800, color: '#000000' }}>
+          SQLite Forensic Artifact Analyzer
+        </Title>
+        <Text ta="center" size="xl" mb="lg" style={{ fontWeight: 600, color: '#000000' }}>
           Upload a SQLite database to validate, analyze, and optimize it for digital forensic investigations.
         </Text>
         
@@ -1437,7 +1439,7 @@ export default function Home() {
               accept=".db,.sqlite,.sqlite3"
               clearable
               leftSection={<IconUpload size={16} />}
-              styles={{ input: { width: '350px' } }}
+              styles={{ input: { width: '350px', fontWeight: 500 } }}
               disabled={loading}
             />
             <Button
@@ -1445,6 +1447,8 @@ export default function Home() {
               disabled={!file || loading}
               loading={loading}
               leftSection={<IconDatabase size={16} />}
+              size="md"
+              style={{ fontWeight: 600 }}
             >
               Analyze Database
             </Button>
@@ -1453,6 +1457,8 @@ export default function Home() {
               color="red"
               onClick={clearStoredData}
               disabled={!results && !fileId}
+              size="md"
+              style={{ fontWeight: 600 }}
             >
               Clear Data
             </Button>
