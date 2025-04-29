@@ -33,13 +33,12 @@ app = FastAPI(title="SQLite Forensic Artifact Analyzer")
 # Enable CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # For development
-    # Uncomment and use the following for production
-    # allow_origins=[
-    #     "http://localhost:3000",
-    #     "https://sqliteparser.vercel.app",
-    #     "https://sqlite-forensic-analyzer.vercel.app"
-    # ],
+    allow_origins=[  # Use a single allow_origins list that includes all needed origins
+        "*",  # For development
+        "http://localhost:3000",
+        "https://sqliteparser.vercel.app",
+        "https://sqlite-forensic-analyzer.vercel.app"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
