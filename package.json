@@ -17,7 +17,10 @@
     "electron:dev-build": "next build && electron .",
     "package:win": "npm run next:build && electron-builder --win",
     "package:mac": "npm run next:build && electron-builder --mac",
-    "package:linux": "npm run next:build && electron-builder --linux"
+    "package:linux": "npm run next:build && electron-builder --linux",
+    "backend": "cd backend && python run.py",
+    "dev:with-backend": "concurrently -k \"npm run backend\" \"npm run next:dev\"",
+    "electron:dev:with-backend": "concurrently -k \"npm run backend\" \"next dev\" \"wait-on http://localhost:3000 && electron .\""
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

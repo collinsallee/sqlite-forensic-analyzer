@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { API_BASE_URL } from '../../config';
 
 export async function POST(request: NextRequest) {
   console.log("[POST] Handling /api/hex_dump request");
@@ -13,92 +14,54 @@ export async function POST(request: NextRequest) {
     const offset = body.offset || 0;
     const length = body.length || 256;
     
-    // If we're in a browser environment with Electron available
-    if (typeof window !== 'undefined' && window.electron) {
-      // Use Electron's IPC to read the file
-      const result = await window.electron.readFile(fileId, offset, length);
+    // Determine if we should use a local backend or the remote API
+    // Default to localhost:8000 when in development
+    const apiBaseUrl = process.env.NODE_ENV === 'development' 
+      ? 'http://localhost:8000' 
+      : API_BASE_URL;
+    
+    // Forward the request to the actual backend API
+    const apiPath = `${apiBaseUrl}/api/hex_dump`;
+    console.log(`Forwarding to: ${apiPath}`);
+    
+    const response = await fetch(apiPath, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        file_id: fileId,
+        offset: offset,
+        length: length,
+      }),
+    });
+    
+    // Log response status
+    console.log(`Response status: ${response.status}`);
+    
+    if (!response.ok) {
+      console.error(`Error response from API: ${response.status} ${response.statusText}`);
       
-      if (result.error) {
-        return NextResponse.json({ error: result.error }, { status: 400 });
+      try {
+        // Try to get error details if available
+        const errorText = await response.text();
+        console.error(`Error details: ${errorText}`);
+        
+        return NextResponse.json(
+          { error: `API returned status ${response.status}`, details: errorText },
+          { status: response.status }
+        );
+      } catch (e) {
+        return NextResponse.json(
+          { error: `API returned status ${response.status}` },
+          { status: response.status }
+        );
       }
-      
-      // Convert the hex string to an array of rows (16 bytes per row)
-      const hexData: string[] = [];
-      const asciiData: string[] = [];
-      const bytesPerRow = 16;
-      
-      const hexString = result.data;
-      for (let i = 0; i < hexString.length; i += bytesPerRow * 2) {
-        // Each byte is 2 hex chars
-        const rowHex = hexString.slice(i, i + bytesPerRow * 2);
-        let hexRow = '';
-        let asciiRow = '';
-        
-        // Process each byte in the row
-        for (let j = 0; j < rowHex.length; j += 2) {
-          const hexByte = rowHex.slice(j, j + 2);
-          hexRow += hexByte.toUpperCase() + ' ';
-          
-          // Convert to ASCII character
-          const byte = parseInt(hexByte, 16);
-          if (byte >= 32 && byte <= 126) {
-            asciiRow += String.fromCharCode(byte);
-          } else {
-            asciiRow += '.';
-          }
-        }
-        
-        hexData.push(hexRow.trim());
-        asciiData.push(asciiRow);
-      }
-      
-      return NextResponse.json({
-        offset,
-        length: result.length,
-        hex_data: hexData,
-        ascii_data: asciiData
-      });
-    } else {
-      // Fallback to mock data for SSR or when Electron is not available
-      const mockHexData: {
-        offset: number;
-        length: number;
-        hex_data: string[];
-        ascii_data: string[];
-      } = {
-        offset,
-        length,
-        hex_data: [],
-        ascii_data: []
-      };
-      
-      // Generate mock hex data
-      const bytesPerRow = 16;
-      const rows = Math.ceil(length / bytesPerRow);
-      
-      for (let i = 0; i < rows; i++) {
-        let hexRow = '';
-        let asciiRow = '';
-        
-        for (let j = 0; j < bytesPerRow && (i * bytesPerRow + j) < length; j++) {
-          // Generate predictable byte based on position
-          const byteValue = ((offset + i * bytesPerRow + j) % 256);
-          hexRow += byteValue.toString(16).padStart(2, '0').toUpperCase() + ' ';
-          
-          // Generate ASCII representation
-          if (byteValue >= 32 && byteValue <= 126) {
-            asciiRow += String.fromCharCode(byteValue);
-          } else {
-            asciiRow += '.';
-          }
-        }
-        
-        mockHexData.hex_data.push(hexRow.trim());
-        mockHexData.ascii_data.push(asciiRow);
-      }
-      
-      return NextResponse.json(mockHexData);
     }
+    
+    // Return the API response
+    const data = await response.json();
+    return NextResponse.json(data);
   } catch (error) {
     console.error("Error handling hex_dump request:", error);
     return NextResponse.json(

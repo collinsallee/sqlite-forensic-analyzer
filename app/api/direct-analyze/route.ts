@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
 import crypto from 'crypto';
 import { readFileSync } from 'fs';
+import { API_BASE_URL } from '../../config';
 
 // Helper function to analyze a SQLite database header
 function analyzeHeader(headerBytes: Buffer): {
@@ -55,253 +56,56 @@ export async function POST(request: NextRequest) {
   console.log("[POST] Handling /api/direct-analyze request");
   
   try {
-    const formData = await request.formData();
-    const file = formData.get('file') as File;
+    // Clone the request to ensure we can access the body
+    const clonedRequest = request.clone();
     
-    if (!file) {
-      return NextResponse.json(
-        { error: 'No file provided' },
-        { status: 400 }
-      );
+    // Get the form data
+    const formData = await clonedRequest.formData();
+    console.log("FormData received, processing file upload");
+    
+    // Determine if we should use a local backend or the remote API
+    // Default to localhost:8000 when in development
+    const apiBaseUrl = process.env.NODE_ENV === 'development' 
+      ? 'http://localhost:8000' 
+      : API_BASE_URL;
+    
+    // Forward the request to the actual backend API
+    const apiPath = `${apiBaseUrl}/api/analyze-database`;
+    console.log(`Forwarding to: ${apiPath}`);
+    
+    const response = await fetch(apiPath, {
+      method: 'POST',
+      // Pass through the form data directly
+      body: formData,
+    });
+    
+    // Log response status
+    console.log(`Response status: ${response.status}`);
+    
+    if (!response.ok) {
+      console.error(`Error response from API: ${response.status} ${response.statusText}`);
+      
+      try {
+        // Try to get error details if available
+        const errorText = await response.text();
+        console.error(`Error details: ${errorText}`);
+        
+        return NextResponse.json(
+          { error: `API returned status ${response.status}`, details: errorText },
+          { status: response.status }
+        );
+      } catch (e) {
+        return NextResponse.json(
+          { error: `API returned status ${response.status}` },
+          { status: response.status }
+        );
+      }
     }
     
-    // Generate a unique file ID
-    const fileId = uuidv4();
+    // Return the API response
+    const data = await response.json();
+    return NextResponse.json(data);
     
-    // Convert file to ArrayBuffer
-    const arrayBuffer = await file.arrayBuffer();
-    const fileBuffer = Buffer.from(arrayBuffer);
-    
-    // If we're in a browser environment, we need to use window.electron
-    // If we're in a Node.js environment (server-side rendering), we'll use our mock implementation
-    if (typeof window !== 'undefined' && window.electron) {
-      // Save the file through Electron
-      await window.electron.saveFile(Array.from(fileBuffer), fileId);
-      
-      // Calculate hashes
-      const hashes = await window.electron.calculateFileHash(fileId);
-      
-      // Get file info
-      const fileInfo = await window.electron.getFileInfo(fileId);
-      
-      // Read first 100 bytes for header analysis
-      const headerData = await window.electron.readFile(fileId, 0, 100);
-      const headerBuffer = Buffer.from(headerData.data, 'hex');
-      const headerAnalysis = analyzeHeader(headerBuffer);
-      
-      // Create response with real data
-      const response = {
-        validation: {
-          is_valid: headerAnalysis.isValid,
-          errors: headerAnalysis.isValid ? null : ['Invalid SQLite header signature'],
-          md5_hash: hashes.md5_hash,
-          sha1_hash: hashes.sha1_hash,
-          sha256_hash: hashes.sha256_hash,
-          file_size: fileInfo.file_size,
-          header_signature: headerAnalysis.signature,
-          file_id: fileId,
-          artifact_type: headerAnalysis.isValid ? "SQLite Database" : null
-        },
-        analysis: {
-          file_id: fileId,
-          tables: [
-            {
-              name: "mock_table",
-              rows: 5,
-              columns: [
-                {
-                  name: "id",
-                  type: "INTEGER",
-                  not_null: true,
-                  primary_key: true
-                },
-                {
-                  name: "name",
-                  type: "TEXT",
-                  not_null: false,
-                  primary_key: false
-                }
-              ],
-              sample_data: [
-                { id: 1, name: "Sample 1" },
-                { id: 2, name: "Sample 2" }
-              ]
-            }
-          ],
-          indices_count: 1,
-          triggers_count: 0,
-          size_formatted: formatFileSize(fileInfo.file_size),
-          total_rows: 5,
-          forensic_metadata: {
-            sqlite_version: "3.39.4",
-            page_size: headerAnalysis.pageSize,
-            encoding: headerAnalysis.encoding,
-            creation_time: fileInfo.creation_time,
-            last_modified_time: fileInfo.last_modified_time,
-            write_format: 1,
-            journal_mode: "delete",
-            application_id: null,
-            user_version: 0
-          },
-          deleted_records: [
-            {
-              type: "Record",
-              offset: "0x1000",
-              count: 2,
-              note: "Potentially recoverable deleted records"
-            }
-          ],
-          artifact_type: headerAnalysis.isValid ? "SQLite Database" : "Unknown",
-          artifact_significance: "This appears to be a standard SQLite database with no specific forensic significance.",
-          issues: [],
-          recommendations: [
-            {
-              type: "Analysis",
-              priority: "medium",
-              message: "Examine the deleted records to recover any potential evidence."
-            }
-          ],
-          recovery_info: {
-            is_corrupted: false,
-            corruption_details: [],
-            recovered_tables: ["mock_table"],
-            partial_analysis: false,
-            error_log: []
-          },
-          error_log: []
-        },
-        optimization: {
-          suggestions: [
-            {
-              type: "Index",
-              description: "Add an index on frequently queried columns",
-              sql: "CREATE INDEX idx_name ON mock_table(name);",
-              table: "mock_table"
-            }
-          ],
-          potential_improvements: [
-            {
-              type: "Performance",
-              description: "Consider using WAL journal mode for better performance",
-              impact: "medium"
-            }
-          ]
-        }
-      };
-      
-      return NextResponse.json(response);
-    } else {
-      // Mock response for SSR or when Electron is not available
-      // Calculate hashes locally
-      const md5 = crypto.createHash('md5').update(fileBuffer).digest('hex');
-      const sha1 = crypto.createHash('sha1').update(fileBuffer).digest('hex');
-      const sha256 = crypto.createHash('sha256').update(fileBuffer).digest('hex');
-      
-      // Analyze header
-      const headerAnalysis = analyzeHeader(fileBuffer.slice(0, 100));
-      
-      // Create a mock ProcessResponse
-      const mockResponse = {
-        validation: {
-          is_valid: headerAnalysis.isValid,
-          errors: headerAnalysis.isValid ? null : ['Invalid SQLite header signature'],
-          md5_hash: md5,
-          sha1_hash: sha1,
-          sha256_hash: sha256,
-          file_size: fileBuffer.length,
-          header_signature: headerAnalysis.signature,
-          file_id: fileId,
-          artifact_type: headerAnalysis.isValid ? "SQLite Database" : null
-        },
-        analysis: {
-          file_id: fileId,
-          tables: [
-            {
-              name: "mock_table",
-              rows: 5,
-              columns: [
-                {
-                  name: "id",
-                  type: "INTEGER",
-                  not_null: true,
-                  primary_key: true
-                },
-                {
-                  name: "name",
-                  type: "TEXT",
-                  not_null: false,
-                  primary_key: false
-                }
-              ],
-              sample_data: [
-                { id: 1, name: "Sample 1" },
-                { id: 2, name: "Sample 2" }
-              ]
-            }
-          ],
-          indices_count: 1,
-          triggers_count: 0,
-          size_formatted: formatFileSize(fileBuffer.length),
-          total_rows: 5,
-          forensic_metadata: {
-            sqlite_version: "3.39.4",
-            page_size: headerAnalysis.pageSize,
-            encoding: headerAnalysis.encoding,
-            creation_time: new Date().toISOString(),
-            last_modified_time: new Date().toISOString(),
-            write_format: 1,
-            journal_mode: "delete",
-            application_id: null,
-            user_version: 0
-          },
-          deleted_records: [
-            {
-              type: "Record",
-              offset: "0x1000",
-              count: 2,
-              note: "Potentially recoverable deleted records"
-            }
-          ],
-          artifact_type: headerAnalysis.isValid ? "SQLite Database" : "Unknown",
-          artifact_significance: "This appears to be a standard SQLite database with no specific forensic significance.",
-          issues: [],
-          recommendations: [
-            {
-              type: "Analysis",
-              priority: "medium",
-              message: "Examine the deleted records to recover any potential evidence."
-            }
-          ],
-          recovery_info: {
-            is_corrupted: false,
-            corruption_details: [],
-            recovered_tables: ["mock_table"],
-            partial_analysis: false,
-            error_log: []
-          },
-          error_log: []
-        },
-        optimization: {
-          suggestions: [
-            {
-              type: "Index",
-              description: "Add an index on frequently queried columns",
-              sql: "CREATE INDEX idx_name ON mock_table(name);",
-              table: "mock_table"
-            }
-          ],
-          potential_improvements: [
-            {
-              type: "Performance",
-              description: "Consider using WAL journal mode for better performance",
-              impact: "medium"
-            }
-          ]
-        }
-      };
-      
-      return NextResponse.json(mockResponse);
-    }
   } catch (error) {
     console.error("Error handling direct-analyze request:", error);
     return NextResponse.json(
