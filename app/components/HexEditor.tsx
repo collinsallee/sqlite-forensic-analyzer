@@ -64,6 +64,7 @@ export default function HexEditor({ fileId, initialOffset = null }: HexEditorPro
   const loadHexData = async () => {
     if (!fileId) {
       setError("No file ID provided. Please upload a database file first.");
+      setIsLoading(false);
       return;
     }
 
@@ -803,24 +804,56 @@ export default function HexEditor({ fileId, initialOffset = null }: HexEditorPro
               </ScrollArea>
 
               {/* Navigation Controls */}
-              <Group justify="space-between">
-                <Button 
-                  size="compact"
-                  onClick={handlePrevPage} 
-                  disabled={!hexData || offset === 0 || isLoading}
-                >
-                  Previous Page
-                </Button>
-                <Text>
-                  {hexData ? `Page ${offset / length + 1} of ${Math.ceil(hexData.length / length)}` : ''}
-                </Text>
-                <Button 
-                  size="compact"
-                  onClick={handleNextPage}
-                  disabled={!hexData || offset + length >= hexData.length || isLoading}
-                >
-                  Next Page
-                </Button>
+              <Group justify="space-between" align="center">
+                <Group gap="xs">
+                  <Button
+                    size="compact"
+                    variant="light"
+                    onClick={handlePrevPage}
+                    disabled={!fileId || isLoading || offset === 0}
+                    leftSection={<IconChevronLeft size={16} />}
+                  >
+                    Previous Page
+                  </Button>
+                  <Button
+                    size="compact"
+                    variant="light"
+                    onClick={handleNextPage}
+                    disabled={!fileId || isLoading}
+                    rightSection={<IconChevronRight size={16} />}
+                  >
+                    Next Page
+                  </Button>
+                </Group>
+                <Group gap="xs">
+                  <Text size="sm">Offset:</Text>
+                  <NumberInput
+                    size="xs"
+                    style={{ width: '100px' }}
+                    value={offset}
+                    onChange={(value) => {
+                      if (typeof value === 'number') {
+                        setOffset(value);
+                      }
+                    }}
+                    min={0}
+                    disabled={!fileId || isLoading}
+                  />
+                  <Text size="sm">Length:</Text>
+                  <NumberInput
+                    size="xs"
+                    style={{ width: '100px' }}
+                    value={length}
+                    onChange={(value) => {
+                      if (typeof value === 'number') {
+                        setLength(Math.min(Math.max(value, 16), 1024));
+                      }
+                    }}
+                    min={16}
+                    max={1024}
+                    disabled={!fileId || isLoading}
+                  />
+                </Group>
               </Group>
             </Stack>
           </Paper>
