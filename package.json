@@ -4,14 +4,20 @@
   "private": true,
   "main": "electron/main.js",
   "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "next build",
-    "start": "next start",
+    "dev": "npm run electron:dev",
+    "build": "npm run electron:build",
+    "start": "npm run electron:start",
+    "next:dev": "next dev",
+    "next:build": "next build",
+    "next:start": "next start",
     "lint": "next lint",
     "electron:dev": "concurrently -k \"next dev\" \"wait-on http://localhost:3000 && electron .\"",
     "electron:build": "next build && electron-builder",
     "electron:start": "electron .",
-    "electron:dev-build": "next build && electron ."
+    "electron:dev-build": "next build && electron .",
+    "package:win": "npm run next:build && electron-builder --win",
+    "package:mac": "npm run next:build && electron-builder --mac",
+    "package:linux": "npm run next:build && electron-builder --linux"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -33,7 +39,6 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/uuid": "^9.0.8",
-    "@vercel/node": "^5.1.14",
     "concurrently": "^9.1.2",
     "electron": "^36.0.0",
     "electron-builder": "^26.0.12",
