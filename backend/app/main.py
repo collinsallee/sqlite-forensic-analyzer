@@ -52,6 +52,13 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 BACKUP_DIR = Path("backups")
 BACKUP_DIR.mkdir(exist_ok=True)
 
+def get_file_path(file_id: str) -> Optional[str]:
+    """Get the path to an uploaded file by its ID."""
+    file_path = os.path.join(UPLOAD_DIR, file_id)
+    if not os.path.exists(file_path):
+        return None
+    return file_path
+
 class ValidationResponse(BaseModel):
     is_valid: bool
     errors: Optional[List[str]] = None
@@ -999,6 +1006,45 @@ async def get_backup(filename: str):
     except Exception as e:
         logger.error(f"Error retrieving backup: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error retrieving backup: {str(e)}")
+
+@app.post("/api/table-data")
+async def get_table_data(request: Request):
+    try:
+        data = await request.json()
+        file_id = data.get('file_id')
+        table_name = data.get('table_name')
+        page = data.get('page', 1)
+        page_size = data.get('page_size', 50)
+        sort_column = data.get('sort_column')
+        sort_direction = data.get('sort_direction', 'ASC')
+        filters = data.get('filters', {})
+
+        if not file_id or not table_name:
+            raise HTTPException(status_code=400, detail="Missing required parameters")
+
+        # Get the file path from the file ID
+        file_path = get_file_path(file_id)
+        if not file_path:
+            raise HTTPException(status_code=404, detail="File not found")
+
+        # Initialize parser and get table data
+        parser = SqliteForensicParser(file_path)
+        result = parser.get_table_data(
+            table_name=table_name,
+            page=page,
+            page_size=page_size,
+            sort_column=sort_column,
+            sort_direction=sort_direction,
+            filters=filters
+        )
+
+        if 'error' in result:
+            raise HTTPException(status_code=500, detail=result['error'])
+
+        return result
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
     import uvicorn

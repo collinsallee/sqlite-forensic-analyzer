@@ -636,3 +636,85 @@ class SqliteForensicParser:
         if self.connection:
             self.connection.close()
             self.connection = None 
+
+    def get_table_data(self, table_name: str, page: int = 1, page_size: int = 50, 
+                      sort_column: str = None, sort_direction: str = 'ASC',
+                      filters: Dict[str, str] = None) -> Dict[str, Any]:
+        """Fetch paginated table data with sorting and filtering."""
+        if not self.connection:
+            if not self.connect_to_db():
+                return {'error': 'Could not connect to database'}
+            
+        try:
+            cursor = self.connection.cursor()
+            
+            # Validate table name to prevent SQL injection
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (table_name,))
+            if not cursor.fetchone():
+                return {'error': f'Table {table_name} not found'}
+            
+            # Build the base query
+            base_query = f"SELECT * FROM {table_name}"
+            count_query = f"SELECT COUNT(*) FROM {table_name}"
+            
+            # Add filters if provided
+            where_clauses = []
+            params = []
+            if filters:
+                for column, value in filters.items():
+                    # Validate column name
+                    cursor.execute(f"PRAGMA table_info({table_name})")
+                    valid_columns = [row['name'] for row in cursor.fetchall()]
+                    if column not in valid_columns:
+                        continue
+                        
+                    where_clauses.append(f"{column} LIKE ?")
+                    params.append(f"%{value}%")
+                
+            if where_clauses:
+                where_clause = " WHERE " + " AND ".join(where_clauses)
+                base_query += where_clause
+                count_query += where_clause
+            
+            # Add sorting if provided
+            if sort_column:
+                # Validate sort column
+                cursor.execute(f"PRAGMA table_info({table_name})")
+                valid_columns = [row['name'] for row in cursor.fetchall()]
+                if sort_column in valid_columns:
+                    base_query += f" ORDER BY {sort_column} {sort_direction}"
+            
+            # Add pagination
+            offset = (page - 1) * page_size
+            base_query += f" LIMIT {page_size} OFFSET {offset}"
+            
+            # Get total count
+            cursor.execute(count_query, params)
+            total_count = cursor.fetchone()[0]
+            
+            # Get paginated data
+            cursor.execute(base_query, params)
+            rows = cursor.fetchall()
+            
+            # Convert rows to dictionaries
+            data = []
+            for row in rows:
+                row_dict = {key: row[key] for key in row.keys()}
+                data.append(row_dict)
+            
+            return {
+                'data': data,
+                'total_count': total_count,
+                'page': page,
+                'page_size': page_size,
+                'total_pages': (total_count + page_size - 1) // page_size
+            }
+            
+        except sqlite3.Error as e:
+            return {'error': str(e)}
+        except Exception as e:
+            return {'error': f'Unexpected error: {str(e)}'}
+        finally:
+            if self.connection:
+                self.connection.close()
+                self.connection = None 

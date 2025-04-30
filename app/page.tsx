@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import {
   Container,
   Title,
@@ -34,17 +34,17 @@ import {
   SegmentedControl,
   Slider,
   ColorSwatch,
-} from '@mantine/core';
-import { 
-  IconCheck, 
-  IconCopy, 
-  IconDatabase, 
-  IconUpload, 
-  IconShieldLock, 
-  IconAlertCircle, 
-  IconChartBar, 
-  IconFingerprint, 
-  IconSearch, 
+} from "@mantine/core";
+import {
+  IconCheck,
+  IconCopy,
+  IconDatabase,
+  IconUpload,
+  IconShieldLock,
+  IconAlertCircle,
+  IconChartBar,
+  IconFingerprint,
+  IconSearch,
   IconHistory,
   IconInfoCircle,
   IconFileCode,
@@ -56,16 +56,39 @@ import {
   IconArrowRight,
   IconChartHistogram,
   IconEye,
-} from '@tabler/icons-react';
-import { Notifications, notifications } from '@mantine/notifications';
-import dynamic from 'next/dynamic';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid, Legend } from 'recharts';
-import { API_BASE_URL } from './config';
+} from "@tabler/icons-react";
+import { Notifications, notifications } from "@mantine/notifications";
+import dynamic from "next/dynamic";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  CartesianGrid,
+  Legend,
+} from "recharts";
+import { API_BASE_URL } from "./config";
+import TableDataViewer from "./components/TableDataViewer";
 
 // Dynamically import the HexEditor component to avoid SSR issues
-const HexEditor = dynamic(() => import('./components/HexEditor'), {
+const HexEditor = dynamic(() => import("./components/HexEditor"), {
   ssr: false,
-  loading: () => <div style={{ height: 400, display: 'flex', justifyContent: 'center', alignItems: 'center' }}><Loader size="xl" type="dots" /></div>,
+  loading: () => (
+    <div
+      style={{
+        height: 400,
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
+      <Loader size="xl" type="dots" />
+    </div>
+  ),
 });
 
 // Types based on our updated backend API
@@ -180,14 +203,14 @@ interface VisualizationData {
 }
 
 function formatFileSize(bytes: number): string {
-  if (bytes < 1024) return bytes + ' B';
-  else if (bytes < 1048576) return (bytes / 1024).toFixed(2) + ' KB';
-  else if (bytes < 1073741824) return (bytes / 1048576).toFixed(2) + ' MB';
-  else return (bytes / 1073741824).toFixed(2) + ' GB';
+  if (bytes < 1024) return bytes + " B";
+  else if (bytes < 1048576) return (bytes / 1024).toFixed(2) + " KB";
+  else if (bytes < 1073741824) return (bytes / 1048576).toFixed(2) + " MB";
+  else return (bytes / 1073741824).toFixed(2) + " GB";
 }
 
 function formatHexOffset(offset: number): string {
-  return '0x' + offset.toString(16).toUpperCase().padStart(8, '0');
+  return "0x" + offset.toString(16).toUpperCase().padStart(8, "0");
 }
 
 export default function Home() {
@@ -197,31 +220,34 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [fileId, setFileId] = useState<string>('');
-  
+  const [fileId, setFileId] = useState<string>("");
+
   // UI state
   const [selectedTabValue, setSelectedTabValue] = useState<string>("forensic");
   const [jumpToOffset, setJumpToOffset] = useState<number | null>(null);
   const [isClient, setIsClient] = useState(false);
-  const [visualizationMode, setVisualizationMode] = useState<'histogram' | 'entropy'>('histogram');
-  const [visualizationData, setVisualizationData] = useState<VisualizationData | null>(null);
+  const [visualizationMode, setVisualizationMode] = useState<
+    "histogram" | "entropy"
+  >("histogram");
+  const [visualizationData, setVisualizationData] =
+    useState<VisualizationData | null>(null);
   const [blockSize, setBlockSize] = useState(1024); // 1KB blocks for entropy analysis
-  
+
   // Load data from localStorage after component mounts (client-side only)
   useEffect(() => {
     setIsClient(true);
-    const savedResults = localStorage.getItem('sqliteAnalyzerResults');
-    const savedFileId = localStorage.getItem('sqliteAnalyzerFileId');
-    
+    const savedResults = localStorage.getItem("sqliteAnalyzerResults");
+    const savedFileId = localStorage.getItem("sqliteAnalyzerFileId");
+
     if (savedResults) {
       try {
         setResults(JSON.parse(savedResults));
       } catch (e) {
         console.error("Failed to parse saved results:", e);
-        localStorage.removeItem('sqliteAnalyzerResults');
+        localStorage.removeItem("sqliteAnalyzerResults");
       }
     }
-    
+
     if (savedFileId) {
       setFileId(savedFileId);
     }
@@ -230,19 +256,19 @@ export default function Home() {
   // Save results and fileId to localStorage when they change
   useEffect(() => {
     if (results && isClient) {
-      localStorage.setItem('sqliteAnalyzerResults', JSON.stringify(results));
+      localStorage.setItem("sqliteAnalyzerResults", JSON.stringify(results));
     }
   }, [results, isClient]);
 
   useEffect(() => {
     if (fileId && isClient) {
-      localStorage.setItem('sqliteAnalyzerFileId', fileId);
+      localStorage.setItem("sqliteAnalyzerFileId", fileId);
     }
   }, [fileId, isClient]);
 
   const processDatabase = async () => {
     if (!file) {
-      setError('Please select a SQLite database file');
+      setError("Please select a SQLite database file");
       return;
     }
 
@@ -252,48 +278,52 @@ export default function Home() {
 
     try {
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append("file", file);
 
       // Use the direct-analyze endpoint which doesn't rely on external API
-      const response = await fetch('/api/analyze-database', {
-        method: 'POST',
+      const response = await fetch("/api/analyze-database", {
+        method: "POST",
         body: formData,
       });
 
       if (!response.ok) {
-        throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+        throw new Error(
+          `Server returned ${response.status}: ${response.statusText}`
+        );
       }
 
       const data = await response.json();
       setResults(data);
-      
+
       // Extract and save the file_id
       if (data.validation && data.validation.file_id) {
         console.log("Received file ID:", data.validation.file_id);
         setFileId(data.validation.file_id);
-        
+
         // Switch to the forensic tab by default
         setSelectedTabValue("forensic");
-        
+
         // Show success notification
         notifications.show({
-          title: 'Success',
-          message: 'Database artifact successfully analyzed',
-          color: 'green',
+          title: "Success",
+          message: "Database artifact successfully analyzed",
+          color: "green",
           icon: <IconCheck size={16} />,
         });
       } else {
         console.error("No file_id received from backend:", data);
       }
-      
     } catch (error) {
       console.error("Error processing database:", error);
-      setError(error instanceof Error ? error.message : 'An unknown error occurred');
-      
+      setError(
+        error instanceof Error ? error.message : "An unknown error occurred"
+      );
+
       notifications.show({
-        title: 'Error',
-        message: error instanceof Error ? error.message : 'Failed to process database',
-        color: 'red',
+        title: "Error",
+        message:
+          error instanceof Error ? error.message : "Failed to process database",
+        color: "red",
         icon: <IconAlertCircle size={16} />,
       });
     } finally {
@@ -308,36 +338,36 @@ export default function Home() {
 
   const fetchVisualizationData = async () => {
     if (!fileId) return;
-    
+
     try {
       setLoading(true);
-      
+
       // Get file content in chunks to analyze using only the fileId
       // Try to get file size first
       const sizeResponse = await fetch(`/api/files/${fileId}`, {
-        method: 'GET',
+        method: "GET",
       }).catch(() => null);
-      
+
       let fileSize = 100000; // Default to 100KB if we can't get the actual size
-      
+
       if (sizeResponse && sizeResponse.ok) {
         const fileInfo = await sizeResponse.json();
         fileSize = fileInfo.file_size || 100000;
       }
-      
+
       // Get hex dumps from various parts of the file
       const maxChunkSize = 10240; // 10KB chunks max
       const numChunks = Math.min(10, Math.ceil(fileSize / maxChunkSize)); // At most 10 chunks
       const chunkSize = Math.ceil(fileSize / numChunks);
-      
+
       // Get hex dumps from various parts of the file
       const hexDumps = [];
       for (let i = 0; i < numChunks; i++) {
         const offset = i * chunkSize;
         const hexResponse = await fetch(`/api/hex_dump`, {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             file_id: fileId,
@@ -345,20 +375,20 @@ export default function Home() {
             length: chunkSize,
           }),
         });
-        
+
         if (!hexResponse.ok) {
           continue; // Skip failed chunks
         }
-        
+
         const hexData = await hexResponse.json();
         hexDumps.push(hexData);
       }
-      
+
       // Generate histogram from hex dumps
       const byteFrequency = new Array(256).fill(0);
       let bytesProcessed = 0;
-      
-      hexDumps.forEach(dump => {
+
+      hexDumps.forEach((dump) => {
         if (dump.hex_data && Array.isArray(dump.hex_data)) {
           dump.hex_data.forEach((hexLine: string) => {
             // Each hex value is two characters in the string
@@ -373,18 +403,19 @@ export default function Home() {
           });
         }
       });
-      
+
       // Create histogram data
       const histogramData = byteFrequency.map((frequency, byte) => {
-        const ascii = byte >= 32 && byte <= 126 ? String.fromCharCode(byte) : '';
+        const ascii =
+          byte >= 32 && byte <= 126 ? String.fromCharCode(byte) : "";
         return {
           byte,
-          hex: byte.toString(16).padStart(2, '0').toUpperCase(),
+          hex: byte.toString(16).padStart(2, "0").toUpperCase(),
           ascii,
-          frequency: frequency as number
+          frequency: frequency as number,
         };
       });
-      
+
       // Calculate entropy for each chunk
       const entropyBlocks = hexDumps.map((dump, index) => {
         let blockEntropy = 0;
@@ -392,7 +423,7 @@ export default function Home() {
           // Calculate entropy of this chunk
           const chunkByteFreq = new Array(256).fill(0);
           let totalBytes = 0;
-          
+
           dump.hex_data.forEach((hexLine: string) => {
             const hexValues = hexLine.match(/.{1,2}/g) || [];
             hexValues.forEach((hex: string) => {
@@ -403,34 +434,39 @@ export default function Home() {
               }
             });
           });
-          
+
           // Shannon entropy
           blockEntropy = calculateShannonEntropy(chunkByteFreq, totalBytes);
         }
-        
+
         return {
           offset: index * chunkSize,
-          entropy: blockEntropy
+          entropy: blockEntropy,
         };
       });
-      
+
       // Calculate overall entropy
-      const overallEntropy = calculateShannonEntropy(byteFrequency, bytesProcessed);
-      
+      const overallEntropy = calculateShannonEntropy(
+        byteFrequency,
+        bytesProcessed
+      );
+
       setVisualizationData({
         histogram: histogramData,
         entropy: {
           overall: overallEntropy,
-          blocks: entropyBlocks
-        }
+          blocks: entropyBlocks,
+        },
       });
-      
     } catch (error) {
       console.error("Error fetching visualization data:", error);
       notifications.show({
-        title: 'Error',
-        message: error instanceof Error ? error.message : 'Failed to load visualization data',
-        color: 'red',
+        title: "Error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Failed to load visualization data",
+        color: "red",
       });
     } finally {
       setLoading(false);
@@ -438,9 +474,12 @@ export default function Home() {
   };
 
   // Helper function to calculate Shannon entropy
-  const calculateShannonEntropy = (byteFrequency: number[], totalBytes: number): number => {
+  const calculateShannonEntropy = (
+    byteFrequency: number[],
+    totalBytes: number
+  ): number => {
     if (totalBytes === 0) return 0;
-    
+
     let entropy = 0;
     for (let i = 0; i < byteFrequency.length; i++) {
       if (byteFrequency[i] > 0) {
@@ -448,58 +487,70 @@ export default function Home() {
         entropy -= probability * Math.log2(probability);
       }
     }
-    
+
     return entropy;
   };
 
   // Load visualization data when user switches to visualization tab
   useEffect(() => {
-    if (selectedTabValue === 'visualization' && fileId && !visualizationData) {
+    if (selectedTabValue === "visualization" && fileId && !visualizationData) {
       fetchVisualizationData();
     }
   }, [selectedTabValue, fileId, visualizationData]);
 
-  const OffsetLink = ({ offset, label }: { offset: number | string, label?: string }) => {
-    const numericOffset = typeof offset === 'string' ? 
-      (offset.startsWith('0x') ? parseInt(offset.substring(2), 16) : parseInt(offset)) : 
-      offset;
-      
+  const OffsetLink = ({
+    offset,
+    label,
+  }: {
+    offset: number | string;
+    label?: string;
+  }) => {
+    const numericOffset =
+      typeof offset === "string"
+        ? offset.startsWith("0x")
+          ? parseInt(offset.substring(2), 16)
+          : parseInt(offset)
+        : offset;
+
     return (
-      <Button 
-        variant="subtle" 
-        size="compact" 
+      <Button
+        variant="subtle"
+        size="compact"
         onClick={() => handleOffsetClick(numericOffset)}
         rightSection={<IconArrowRight size={14} />}
       >
-        {label || (typeof offset === 'string' ? offset : formatHexOffset(offset))}
+        {label ||
+          (typeof offset === "string" ? offset : formatHexOffset(offset))}
       </Button>
     );
   };
 
   const clearStoredData = () => {
-    localStorage.removeItem('sqliteAnalyzerResults');
-    localStorage.removeItem('sqliteAnalyzerFileId');
+    localStorage.removeItem("sqliteAnalyzerResults");
+    localStorage.removeItem("sqliteAnalyzerFileId");
     setResults(null);
-    setFileId('');
+    setFileId("");
     setFile(null);
     setError(null);
-    
+
     notifications.show({
-      title: 'Data Cleared',
-      message: 'Local storage has been cleared',
-      color: 'blue',
+      title: "Data Cleared",
+      message: "Local storage has been cleared",
+      color: "blue",
     });
   };
 
   const renderValidationSection = () => {
     if (!results || !results.validation) return null;
-    
+
     const { validation } = results;
-    
+
     return (
       <Paper p="md" withBorder>
-        <Title order={3} mb="md">Validation Results</Title>
-        
+        <Title order={3} mb="md">
+          Validation Results
+        </Title>
+
         {!validation.is_valid ? (
           <Alert color="red" title="Invalid Database" mb="md">
             This file is not a valid SQLite database
@@ -509,7 +560,7 @@ export default function Home() {
             This file is a valid SQLite database
           </Alert>
         )}
-        
+
         <Grid>
           <Grid.Col span={6}>
             <Paper p="sm" withBorder>
@@ -518,15 +569,22 @@ export default function Home() {
                 <Code>{validation.md5_hash}</Code>
                 <CopyButton value={validation.md5_hash}>
                   {({ copied, copy }) => (
-                    <ActionIcon color={copied ? 'green' : 'blue'} onClick={copy}>
-                      {copied ? <IconCheck size={16} /> : <IconCopy size={16} />}
+                    <ActionIcon
+                      color={copied ? "green" : "blue"}
+                      onClick={copy}
+                    >
+                      {copied ? (
+                        <IconCheck size={16} />
+                      ) : (
+                        <IconCopy size={16} />
+                      )}
                     </ActionIcon>
                   )}
                 </CopyButton>
               </Group>
             </Paper>
           </Grid.Col>
-          
+
           <Grid.Col span={6}>
             <Paper p="sm" withBorder>
               <Title order={5}>File Hash (SHA1)</Title>
@@ -534,38 +592,47 @@ export default function Home() {
                 <Code>{validation.sha1_hash}</Code>
                 <CopyButton value={validation.sha1_hash}>
                   {({ copied, copy }) => (
-                    <ActionIcon color={copied ? 'green' : 'blue'} onClick={copy}>
-                      {copied ? <IconCheck size={16} /> : <IconCopy size={16} />}
+                    <ActionIcon
+                      color={copied ? "green" : "blue"}
+                      onClick={copy}
+                    >
+                      {copied ? (
+                        <IconCheck size={16} />
+                      ) : (
+                        <IconCopy size={16} />
+                      )}
                     </ActionIcon>
                   )}
                 </CopyButton>
               </Group>
             </Paper>
           </Grid.Col>
-          
+
           <Grid.Col span={6}>
             <Paper p="sm" withBorder mt="md">
               <Title order={5}>File Size</Title>
               <Text>{formatFileSize(validation.file_size)}</Text>
             </Paper>
           </Grid.Col>
-          
+
           <Grid.Col span={6}>
             <Paper p="sm" withBorder mt="md">
               <Title order={5}>SQLite Signature</Title>
               <Text>{validation.header_signature}</Text>
             </Paper>
           </Grid.Col>
-          
+
           {validation.artifact_type && (
             <Grid.Col span={12}>
               <Paper p="sm" withBorder mt="md">
                 <Title order={5}>Detected Artifact Type</Title>
-                <Badge size="lg" color="blue" mt="xs">{validation.artifact_type}</Badge>
+                <Badge size="lg" color="blue" mt="xs">
+                  {validation.artifact_type}
+                </Badge>
               </Paper>
             </Grid.Col>
           )}
-          
+
           {validation.errors && validation.errors.length > 0 && (
             <Grid.Col span={12}>
               <Paper p="sm" withBorder mt="md">
@@ -585,57 +652,69 @@ export default function Home() {
 
   const renderForensicSection = () => {
     if (!results || !results.analysis) return null;
-    
+
     const { analysis } = results;
-    
+
     return (
       <Stack gap="md">
         <Paper p="md" withBorder>
-          <Title order={3} mb="md">Forensic Metadata</Title>
-          
+          <Title order={3} mb="md">
+            Forensic Metadata
+          </Title>
+
           <Grid>
             <Grid.Col span={6}>
               <Paper p="sm" withBorder>
                 <Title order={5}>Artifact Type</Title>
-                <Badge size="lg" color="blue" mt="xs">{analysis.artifact_type}</Badge>
+                <Badge size="lg" color="blue" mt="xs">
+                  {analysis.artifact_type}
+                </Badge>
               </Paper>
             </Grid.Col>
-            
+
             <Grid.Col span={6}>
               <Paper p="sm" withBorder>
                 <Title order={5}>SQLite Version</Title>
                 <Text>{analysis.forensic_metadata.sqlite_version}</Text>
               </Paper>
             </Grid.Col>
-            
+
             <Grid.Col span={6}>
               <Paper p="sm" withBorder mt="md">
                 <Title order={5}>Creation Time</Title>
-                <Text>{new Date(analysis.forensic_metadata.creation_time).toLocaleString()}</Text>
+                <Text>
+                  {new Date(
+                    analysis.forensic_metadata.creation_time
+                  ).toLocaleString()}
+                </Text>
               </Paper>
             </Grid.Col>
-            
+
             <Grid.Col span={6}>
               <Paper p="sm" withBorder mt="md">
                 <Title order={5}>Last Modified</Title>
-                <Text>{new Date(analysis.forensic_metadata.last_modified_time).toLocaleString()}</Text>
+                <Text>
+                  {new Date(
+                    analysis.forensic_metadata.last_modified_time
+                  ).toLocaleString()}
+                </Text>
               </Paper>
             </Grid.Col>
-            
+
             <Grid.Col span={6}>
               <Paper p="sm" withBorder mt="md">
                 <Title order={5}>Page Size</Title>
                 <Text>{analysis.forensic_metadata.page_size} bytes</Text>
               </Paper>
             </Grid.Col>
-            
+
             <Grid.Col span={6}>
               <Paper p="sm" withBorder mt="md">
                 <Title order={5}>Text Encoding</Title>
                 <Text>{analysis.forensic_metadata.encoding}</Text>
               </Paper>
             </Grid.Col>
-            
+
             {analysis.forensic_metadata.application_id && (
               <Grid.Col span={12}>
                 <Paper p="sm" withBorder mt="md">
@@ -644,7 +723,7 @@ export default function Home() {
                 </Paper>
               </Grid.Col>
             )}
-            
+
             {analysis.artifact_significance && (
               <Grid.Col span={12}>
                 <Alert color="blue" title="Forensic Significance" mt="md">
@@ -654,11 +733,13 @@ export default function Home() {
             )}
           </Grid>
         </Paper>
-        
+
         {analysis.deleted_records && analysis.deleted_records.length > 0 && (
           <Paper p="md" withBorder>
-            <Title order={3} mb="md">Potentially Recoverable Deleted Data</Title>
-            
+            <Title order={3} mb="md">
+              Potentially Recoverable Deleted Data
+            </Title>
+
             <Table>
               <Table.Thead>
                 <Table.Tr>
@@ -673,12 +754,15 @@ export default function Home() {
                 {analysis.deleted_records.map((record, index) => (
                   <Table.Tr key={index}>
                     <Table.Td>{record.type}</Table.Td>
-                    <Table.Td>{record.offset || 'N/A'}</Table.Td>
-                    <Table.Td>{record.count || record.size || 'N/A'}</Table.Td>
+                    <Table.Td>{record.offset || "N/A"}</Table.Td>
+                    <Table.Td>{record.count || record.size || "N/A"}</Table.Td>
                     <Table.Td>{record.note}</Table.Td>
                     <Table.Td>
-                      {record.offset && record.offset !== 'various' && (
-                        <OffsetLink offset={record.offset} label="View in Hex Editor" />
+                      {record.offset && record.offset !== "various" && (
+                        <OffsetLink
+                          offset={record.offset}
+                          label="View in Hex Editor"
+                        />
                       )}
                     </Table.Td>
                   </Table.Tr>
@@ -687,11 +771,13 @@ export default function Home() {
             </Table>
           </Paper>
         )}
-        
+
         {analysis.recommendations && analysis.recommendations.length > 0 && (
           <Paper p="md" withBorder>
-            <Title order={3} mb="md">Investigator Recommendations</Title>
-            
+            <Title order={3} mb="md">
+              Investigator Recommendations
+            </Title>
+
             <Table>
               <Table.Thead>
                 <Table.Tr>
@@ -704,10 +790,13 @@ export default function Home() {
                 {analysis.recommendations.map((rec, index) => (
                   <Table.Tr key={index}>
                     <Table.Td>
-                      <Badge 
+                      <Badge
                         color={
-                          rec.priority === 'high' ? 'red' : 
-                          rec.priority === 'medium' ? 'yellow' : 'blue'
+                          rec.priority === "high"
+                            ? "red"
+                            : rec.priority === "medium"
+                            ? "yellow"
+                            : "blue"
                         }
                       >
                         {rec.priority}
@@ -727,77 +816,89 @@ export default function Home() {
 
   const renderDatabaseStructure = () => {
     if (!results || !results.analysis) return null;
-    
+
     const { analysis } = results;
-    
+
     // Check if tables array exists
     const tables = analysis.tables || [];
-    
+
     return (
       <Paper p="md" withBorder>
         <Group justify="space-between" mb="md">
           <Title order={3}>Database Structure</Title>
           <Group>
-            <Badge size="lg" color="blue">{tables.length} Tables</Badge>
-            <Badge size="lg" color="teal">{analysis.indices_count || 0} Indices</Badge>
-            <Badge size="lg" color="grape">{analysis.total_rows || 0} Total Rows</Badge>
-            <Badge size="lg" color="cyan">{analysis.size_formatted || '0 B'}</Badge>
+            <Badge size="lg" color="blue">
+              {tables.length} Tables
+            </Badge>
+            <Badge size="lg" color="teal">
+              {analysis.indices_count || 0} Indices
+            </Badge>
+            <Badge size="lg" color="grape">
+              {analysis.total_rows || 0} Total Rows
+            </Badge>
+            <Badge size="lg" color="cyan">
+              {analysis.size_formatted || "0 B"}
+            </Badge>
           </Group>
         </Group>
-        
+
         <Accordion>
           {tables.map((table) => (
-            <Accordion.Item key={table.name || 'unknown'} value={table.name || 'unknown'}>
+            <Accordion.Item
+              key={table.name || "unknown"}
+              value={table.name || "unknown"}
+            >
               <Accordion.Control>
                 <Group>
                   <IconTable size={18} />
-                  <Text fw={600}>{table.name || 'Unknown'}</Text>
+                  <Text fw={600}>{table.name || "Unknown"}</Text>
                   <Badge color="blue">{table.rows || 0} rows</Badge>
                 </Group>
               </Accordion.Control>
               <Accordion.Panel>
-                <Title order={5} mb="xs">Columns</Title>
-                <Table striped mb="md">
-                  <Table.Thead>
-                    <Table.Tr>
-                      <Table.Th>Name</Table.Th>
-                      <Table.Th>Type</Table.Th>
-                      <Table.Th>Constraints</Table.Th>
-                    </Table.Tr>
-                  </Table.Thead>
-                  <Table.Tbody>
-                    {(table.columns || []).map((column, idx) => (
-                      <Table.Tr key={idx}>
-                        <Table.Td>{column.name || 'Unknown'}</Table.Td>
-                        <Table.Td>{column.type || 'Unknown'}</Table.Td>
-                        <Table.Td>
-                          {column.primary_key && <Badge mr="xs">PRIMARY KEY</Badge>}
-                          {column.not_null && <Badge color="yellow">NOT NULL</Badge>}
-                        </Table.Td>
+                <Stack gap="md">
+                  <Title order={5} mb="xs">
+                    Columns
+                  </Title>
+                  <Table striped mb="md">
+                    <Table.Thead>
+                      <Table.Tr>
+                        <Table.Th>Name</Table.Th>
+                        <Table.Th>Type</Table.Th>
+                        <Table.Th>Constraints</Table.Th>
                       </Table.Tr>
-                    ))}
-                  </Table.Tbody>
-                </Table>
-                
-                {table.sample_data && table.sample_data.length > 0 && (
-                  <>
-                    <Divider my="sm" label="Sample Data" labelPosition="center" />
-                    <ScrollArea h={200}>
-                      <JsonInput
-                        value={JSON.stringify(table.sample_data, null, 2)}
-                        minRows={10}
-                        formatOnBlur
-                        readOnly
-                        w="100%"
-                      />
-                    </ScrollArea>
-                  </>
-                )}
+                    </Table.Thead>
+                    <Table.Tbody>
+                      {(table.columns || []).map((column, idx) => (
+                        <Table.Tr key={idx}>
+                          <Table.Td>{column.name || "Unknown"}</Table.Td>
+                          <Table.Td>{column.type || "Unknown"}</Table.Td>
+                          <Table.Td>
+                            {column.primary_key && (
+                              <Badge mr="xs">PRIMARY KEY</Badge>
+                            )}
+                            {column.not_null && (
+                              <Badge color="yellow">NOT NULL</Badge>
+                            )}
+                          </Table.Td>
+                        </Table.Tr>
+                      ))}
+                    </Table.Tbody>
+                  </Table>
+
+                  {fileId && (
+                    <TableDataViewer
+                      fileId={fileId}
+                      tableName={table.name}
+                      columns={table.columns || []}
+                    />
+                  )}
+                </Stack>
               </Accordion.Panel>
             </Accordion.Item>
           ))}
         </Accordion>
-        
+
         {analysis.issues && analysis.issues.length > 0 && (
           <>
             <Divider my="md" label="Schema Issues" labelPosition="center" />
@@ -807,10 +908,13 @@ export default function Home() {
                   <List.Item
                     key={idx}
                     icon={
-                      <ThemeIcon 
+                      <ThemeIcon
                         color={
-                          issue.severity === 'high' ? 'red' : 
-                          issue.severity === 'medium' ? 'yellow' : 'blue'
+                          issue.severity === "high"
+                            ? "red"
+                            : issue.severity === "medium"
+                            ? "yellow"
+                            : "blue"
                         }
                         size={24}
                         radius="xl"
@@ -843,22 +947,27 @@ export default function Home() {
         </Card.Section>
 
         <Stack gap="xs" mt="md">
-          {recoveryInfo.corruption_details && recoveryInfo.corruption_details.length > 0 && (
-            <Alert title="Corruption Details" color="red">
-              <List>
-                {recoveryInfo.corruption_details.map((detail, index) => (
-                  <List.Item key={index}>{detail}</List.Item>
-                ))}
-              </List>
-            </Alert>
-          )}
+          {recoveryInfo.corruption_details &&
+            recoveryInfo.corruption_details.length > 0 && (
+              <Alert title="Corruption Details" color="red">
+                <List>
+                  {recoveryInfo.corruption_details.map((detail, index) => (
+                    <List.Item key={index}>{detail}</List.Item>
+                  ))}
+                </List>
+              </Alert>
+            )}
 
           {recoveryInfo.recovered_tables.length > 0 && (
             <Box>
-              <Text size="sm" fw={500} mb="xs">Recovered Tables</Text>
+              <Text size="sm" fw={500} mb="xs">
+                Recovered Tables
+              </Text>
               <Group gap="xs">
                 {recoveryInfo.recovered_tables.map((table) => (
-                  <Badge key={table} color="blue">{table}</Badge>
+                  <Badge key={table} color="blue">
+                    {table}
+                  </Badge>
                 ))}
               </Group>
             </Box>
@@ -866,13 +975,16 @@ export default function Home() {
 
           {recoveryInfo.partial_analysis && (
             <Alert title="Partial Analysis" color="yellow">
-              The database was partially analyzed due to corruption. Some data may be missing or incomplete.
+              The database was partially analyzed due to corruption. Some data
+              may be missing or incomplete.
             </Alert>
           )}
 
           {recoveryInfo.error_log.length > 0 && (
             <Box>
-              <Text size="sm" fw={500} mb="xs">Error Log</Text>
+              <Text size="sm" fw={500} mb="xs">
+                Error Log
+              </Text>
               <List size="sm">
                 {recoveryInfo.error_log.map((error, index) => (
                   <List.Item key={index}>{error}</List.Item>
@@ -898,16 +1010,17 @@ export default function Home() {
           setBackups(data);
         } else {
           notifications.show({
-            title: 'Error',
-            message: 'Failed to load backups',
-            color: 'red',
+            title: "Error",
+            message: "Failed to load backups",
+            color: "red",
           });
         }
       } catch (error) {
         notifications.show({
-          title: 'Error',
-          message: error instanceof Error ? error.message : 'Failed to load backups',
-          color: 'red',
+          title: "Error",
+          message:
+            error instanceof Error ? error.message : "Failed to load backups",
+          color: "red",
         });
       } finally {
         setBackupsLoading(false);
@@ -922,22 +1035,23 @@ export default function Home() {
           const data = await response.json();
           setResults(data);
           notifications.show({
-            title: 'Success',
+            title: "Success",
             message: `Restored backup: ${filename}`,
-            color: 'green',
+            color: "green",
           });
         } else {
           notifications.show({
-            title: 'Error',
-            message: 'Failed to restore backup',
-            color: 'red',
+            title: "Error",
+            message: "Failed to restore backup",
+            color: "red",
           });
         }
       } catch (error) {
         notifications.show({
-          title: 'Error',
-          message: error instanceof Error ? error.message : 'Failed to restore backup',
-          color: 'red',
+          title: "Error",
+          message:
+            error instanceof Error ? error.message : "Failed to restore backup",
+          color: "red",
         });
       } finally {
         setBackupsLoading(false);
@@ -945,7 +1059,7 @@ export default function Home() {
     };
 
     useEffect(() => {
-      if (selectedTabValue === 'backups') {
+      if (selectedTabValue === "backups") {
         loadBackups();
       }
     }, [selectedTabValue]);
@@ -981,7 +1095,9 @@ export default function Home() {
                 {backups.map((backup) => (
                   <Table.Tr key={backup.filename}>
                     <Table.Td>{backup.filename}</Table.Td>
-                    <Table.Td>{new Date(backup.created).toLocaleString()}</Table.Td>
+                    <Table.Td>
+                      {new Date(backup.created).toLocaleString()}
+                    </Table.Td>
                     <Table.Td>{formatFileSize(backup.size)}</Table.Td>
                     <Table.Td>
                       <Button
@@ -1007,9 +1123,14 @@ export default function Home() {
 
     return (
       <Stack>
-        {results.analysis.recovery_info && renderRecoveryInfo(results.analysis.recovery_info)}
-        
-        <Tabs value={selectedTabValue} onChange={(value) => value && setSelectedTabValue(value)} mb="md">
+        {results.analysis.recovery_info &&
+          renderRecoveryInfo(results.analysis.recovery_info)}
+
+        <Tabs
+          value={selectedTabValue}
+          onChange={(value) => value && setSelectedTabValue(value)}
+          mb="md"
+        >
           <Tabs.List>
             <Tabs.Tab value="validation">Validation</Tabs.Tab>
             <Tabs.Tab value="forensic">Forensic Analysis</Tabs.Tab>
@@ -1031,7 +1152,6 @@ export default function Home() {
             {renderDatabaseStructure()}
           </Tabs.Panel>
 
-
           <Tabs.Panel value="recommendations" pt="xs">
             {renderForensicSection()}
           </Tabs.Panel>
@@ -1051,15 +1171,17 @@ export default function Home() {
           <Title order={3}>Data Visualization</Title>
           <SegmentedControl
             value={visualizationMode}
-            onChange={(value) => setVisualizationMode(value as 'histogram' | 'entropy')}
+            onChange={(value) =>
+              setVisualizationMode(value as "histogram" | "entropy")
+            }
             data={[
-              { label: 'Byte Histogram', value: 'histogram' },
-              { label: 'Entropy Map', value: 'entropy' },
+              { label: "Byte Histogram", value: "histogram" },
+              { label: "Entropy Map", value: "entropy" },
             ]}
           />
         </Group>
-        
-        {visualizationMode === 'entropy' && (
+
+        {visualizationMode === "entropy" && (
           <Box mb="md">
             <Group justify="apart" align="center">
               <Text>Block Size: {formatFileSize(blockSize)}</Text>
@@ -1077,17 +1199,17 @@ export default function Home() {
                 }}
                 style={{ flex: 1, marginLeft: 20 }}
                 marks={[
-                  { value: 512, label: '512B' },
-                  { value: 4096, label: '4KB' },
-                  { value: 8192, label: '8KB' },
+                  { value: 512, label: "512B" },
+                  { value: 4096, label: "4KB" },
+                  { value: 8192, label: "8KB" },
                 ]}
               />
             </Group>
           </Box>
         )}
-        
+
         {!visualizationData ? (
-          <Box py="xl" style={{ textAlign: 'center' }}>
+          <Box py="xl" style={{ textAlign: "center" }}>
             {loading ? (
               <Loader size="lg" />
             ) : (
@@ -1096,17 +1218,18 @@ export default function Home() {
               </Button>
             )}
           </Box>
-        ) : visualizationMode === 'histogram' ? (
+        ) : visualizationMode === "histogram" ? (
           // Histogram View
           <Box>
             <Alert color="blue" mb="md">
               <Text fw={600}>Byte Frequency Analysis</Text>
               <Text size="sm">
-                This histogram shows the distribution of byte values (0-255) in the file. 
-                Unusual patterns may indicate encryption, compression, or specific file types.
+                This histogram shows the distribution of byte values (0-255) in
+                the file. Unusual patterns may indicate encryption, compression,
+                or specific file types.
               </Text>
             </Alert>
-            
+
             <ResponsiveContainer width="100%" height={400}>
               <BarChart
                 data={visualizationData.histogram}
@@ -1118,35 +1241,57 @@ export default function Home() {
                 }}
               >
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis 
-                  dataKey="byte" 
-                  label={{ value: 'Byte Value (0-255)', position: 'insideBottom', offset: -15 }}
-                  tickFormatter={(value: number) => value % 32 === 0 ? value.toString() : ''}
+                <XAxis
+                  dataKey="byte"
+                  label={{
+                    value: "Byte Value (0-255)",
+                    position: "insideBottom",
+                    offset: -15,
+                  }}
+                  tickFormatter={(value: number) =>
+                    value % 32 === 0 ? value.toString() : ""
+                  }
                 />
-                <YAxis 
-                  label={{ value: 'Frequency', angle: -90, position: 'insideLeft' }}
+                <YAxis
+                  label={{
+                    value: "Frequency",
+                    angle: -90,
+                    position: "insideLeft",
+                  }}
                 />
-                <Tooltip 
-                  formatter={(value: number) => [value, 'Frequency']}
+                <Tooltip
+                  formatter={(value: number) => [value, "Frequency"]}
                   labelFormatter={(value: number) => {
-                    const item = visualizationData.histogram.find(h => h.byte === value);
-                    return `Byte: ${value} (0x${value.toString(16).padStart(2, '0').toUpperCase()})${item?.ascii ? ` ASCII: ${item.ascii}` : ''}`;
+                    const item = visualizationData.histogram.find(
+                      (h) => h.byte === value
+                    );
+                    return `Byte: ${value} (0x${value
+                      .toString(16)
+                      .padStart(2, "0")
+                      .toUpperCase()})${
+                      item?.ascii ? ` ASCII: ${item.ascii}` : ""
+                    }`;
                   }}
                 />
                 <Bar dataKey="frequency" fill="#8884d8" />
               </BarChart>
             </ResponsiveContainer>
-            
+
             <Box mt="md">
-              <Text fw={600} mb="xs">Observations:</Text>
+              <Text fw={600} mb="xs">
+                Observations:
+              </Text>
               <List>
                 {visualizationData.histogram.length > 0 ? (
                   <>
                     <List.Item>
-                      {getHistogramDistributionDescription(visualizationData.histogram)}
+                      {getHistogramDistributionDescription(
+                        visualizationData.histogram
+                      )}
                     </List.Item>
                     <List.Item>
-                      Most frequent byte: {getMostFrequentByte(visualizationData.histogram)}
+                      Most frequent byte:{" "}
+                      {getMostFrequentByte(visualizationData.histogram)}
                     </List.Item>
                   </>
                 ) : (
@@ -1161,18 +1306,19 @@ export default function Home() {
             <Alert color="blue" mb="md">
               <Text fw={600}>Shannon Entropy Analysis</Text>
               <Text size="sm">
-                Entropy measures randomness in data (values from 0 to 8). Higher values {'>'}7 may indicate 
-                encryption or compression. Values around 4-6 are typical for text and normal data.
+                Entropy measures randomness in data (values from 0 to 8). Higher
+                values {">"}7 may indicate encryption or compression. Values
+                around 4-6 are typical for text and normal data.
               </Text>
             </Alert>
-            
+
             <Box mb="lg">
               <Text ta="center" fw={600}>
-                Overall Entropy: {visualizationData.entropy.overall.toFixed(4)} 
+                Overall Entropy: {visualizationData.entropy.overall.toFixed(4)}
                 {getEntropyLabel(visualizationData.entropy.overall)}
               </Text>
             </Box>
-            
+
             <ResponsiveContainer width="100%" height={400}>
               <LineChart
                 data={visualizationData.entropy.blocks}
@@ -1184,22 +1330,32 @@ export default function Home() {
                 }}
               >
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis 
-                  dataKey="offset" 
-                  label={{ value: 'File Offset', position: 'insideBottom', offset: -15 }}
+                <XAxis
+                  dataKey="offset"
+                  label={{
+                    value: "File Offset",
+                    position: "insideBottom",
+                    offset: -15,
+                  }}
                   tickFormatter={(value: number) => formatHexOffset(value)}
                 />
-                <YAxis 
+                <YAxis
                   domain={[0, 8]}
-                  label={{ value: 'Entropy (0-8)', angle: -90, position: 'insideLeft' }}
+                  label={{
+                    value: "Entropy (0-8)",
+                    angle: -90,
+                    position: "insideLeft",
+                  }}
                 />
-                <Tooltip 
-                  formatter={(value: number) => [value.toFixed(4), 'Entropy']}
-                  labelFormatter={(value: number) => `Offset: ${formatHexOffset(value)}`}
+                <Tooltip
+                  formatter={(value: number) => [value.toFixed(4), "Entropy"]}
+                  labelFormatter={(value: number) =>
+                    `Offset: ${formatHexOffset(value)}`
+                  }
                 />
-                <Line 
-                  type="monotone" 
-                  dataKey="entropy" 
+                <Line
+                  type="monotone"
+                  dataKey="entropy"
                   stroke="#ff7300"
                   dot={false}
                   activeDot={{ r: 5 }}
@@ -1208,21 +1364,25 @@ export default function Home() {
                 <CartesianGrid y={7.0} stroke="red" strokeDasharray="3 3" />
               </LineChart>
             </ResponsiveContainer>
-            
+
             <Box mt="md">
-              <Text fw={600} mb="xs">Entropy Insights:</Text>
+              <Text fw={600} mb="xs">
+                Entropy Insights:
+              </Text>
               <List>
-                {getEntropyInsights(visualizationData.entropy).map((insight, idx) => (
-                  <List.Item key={idx}>{insight}</List.Item>
-                ))}
+                {getEntropyInsights(visualizationData.entropy).map(
+                  (insight, idx) => (
+                    <List.Item key={idx}>{insight}</List.Item>
+                  )
+                )}
               </List>
             </Box>
           </Box>
         )}
-        
-        <Button 
-          mt="lg" 
-          onClick={fetchVisualizationData} 
+
+        <Button
+          mt="lg"
+          onClick={fetchVisualizationData}
           leftSection={<IconChartHistogram size={16} />}
         >
           Refresh Data
@@ -1232,85 +1392,125 @@ export default function Home() {
   };
 
   // Helper functions for visualization
-  const getHistogramDistributionDescription = (histogram: VisualizationData['histogram']) => {
+  const getHistogramDistributionDescription = (
+    histogram: VisualizationData["histogram"]
+  ) => {
     // Count how many bytes are present vs absent
-    const presentBytes = histogram.filter(item => item.frequency > 0).length;
+    const presentBytes = histogram.filter((item) => item.frequency > 0).length;
     const percentPresent = (presentBytes / 256) * 100;
-    
+
     if (percentPresent > 95) {
-      return `File uses ${presentBytes} out of 256 possible byte values (${percentPresent.toFixed(1)}%), suggesting uncompressed/unencrypted data.`;
+      return `File uses ${presentBytes} out of 256 possible byte values (${percentPresent.toFixed(
+        1
+      )}%), suggesting uncompressed/unencrypted data.`;
     } else if (percentPresent < 30) {
-      return `File only uses ${presentBytes} out of 256 possible byte values (${percentPresent.toFixed(1)}%), suggesting specialized or structured data.`;
+      return `File only uses ${presentBytes} out of 256 possible byte values (${percentPresent.toFixed(
+        1
+      )}%), suggesting specialized or structured data.`;
     } else {
-      return `File uses ${presentBytes} out of 256 possible byte values (${percentPresent.toFixed(1)}%).`;
+      return `File uses ${presentBytes} out of 256 possible byte values (${percentPresent.toFixed(
+        1
+      )}%).`;
     }
   };
-  
-  const getMostFrequentByte = (histogram: VisualizationData['histogram']) => {
-    if (!histogram.length) return 'None';
-    
+
+  const getMostFrequentByte = (histogram: VisualizationData["histogram"]) => {
+    if (!histogram.length) return "None";
+
     const sorted = [...histogram].sort((a, b) => b.frequency - a.frequency);
     const top = sorted[0];
-    
-    return `0x${top.byte.toString(16).padStart(2, '0').toUpperCase()} (${top.ascii ? `'${top.ascii}'` : 'non-printable'}) - ${top.frequency} occurrences`;
+
+    return `0x${top.byte.toString(16).padStart(2, "0").toUpperCase()} (${
+      top.ascii ? `'${top.ascii}'` : "non-printable"
+    }) - ${top.frequency} occurrences`;
   };
-  
+
   const getEntropyLabel = (entropy: number) => {
-    if (entropy > 7.5) return ' (Very High - Likely Encrypted/Compressed)';
-    if (entropy > 6.5) return ' (High - Possibly Encrypted/Compressed)';
-    if (entropy > 5.5) return ' (Medium-High - Mixed Content)';
-    if (entropy > 4.0) return ' (Medium - Typical for Text/Data)';
-    if (entropy > 2.5) return ' (Low-Medium - Structured Data)';
-    return ' (Low - Highly Structured/Repetitive)';
+    if (entropy > 7.5) return " (Very High - Likely Encrypted/Compressed)";
+    if (entropy > 6.5) return " (High - Possibly Encrypted/Compressed)";
+    if (entropy > 5.5) return " (Medium-High - Mixed Content)";
+    if (entropy > 4.0) return " (Medium - Typical for Text/Data)";
+    if (entropy > 2.5) return " (Low-Medium - Structured Data)";
+    return " (Low - Highly Structured/Repetitive)";
   };
-  
-  const getEntropyInsights = (entropyData: VisualizationData['entropy']) => {
+
+  const getEntropyInsights = (entropyData: VisualizationData["entropy"]) => {
     const insights = [];
-    
+
     // Overall entropy insights
     if (entropyData.overall > 7.0) {
-      insights.push('High overall entropy suggests encrypted or compressed data.');
+      insights.push(
+        "High overall entropy suggests encrypted or compressed data."
+      );
     } else if (entropyData.overall < 3.0) {
-      insights.push('Low overall entropy suggests highly structured or sparse data.');
+      insights.push(
+        "Low overall entropy suggests highly structured or sparse data."
+      );
     }
-    
+
     // Look for sections with significantly different entropy
-    const highEntropyBlocks = entropyData.blocks.filter(block => block.entropy > 7.0);
+    const highEntropyBlocks = entropyData.blocks.filter(
+      (block) => block.entropy > 7.0
+    );
     if (highEntropyBlocks.length > 0) {
-      const percentage = (highEntropyBlocks.length / entropyData.blocks.length) * 100;
-      insights.push(`Found ${highEntropyBlocks.length} high-entropy blocks (${percentage.toFixed(1)}% of file) that may contain encrypted data.`);
+      const percentage =
+        (highEntropyBlocks.length / entropyData.blocks.length) * 100;
+      insights.push(
+        `Found ${
+          highEntropyBlocks.length
+        } high-entropy blocks (${percentage.toFixed(
+          1
+        )}% of file) that may contain encrypted data.`
+      );
     }
-    
+
     // Look for entropy transitions (potential boundaries between different data types)
     let transitions = 0;
     for (let i = 1; i < entropyData.blocks.length; i++) {
-      const diff = Math.abs(entropyData.blocks[i].entropy - entropyData.blocks[i-1].entropy);
+      const diff = Math.abs(
+        entropyData.blocks[i].entropy - entropyData.blocks[i - 1].entropy
+      );
       if (diff > 2.0) transitions++;
     }
-    
+
     if (transitions > 0) {
-      insights.push(`Detected ${transitions} significant entropy transitions, suggesting multiple data types or structures.`);
+      insights.push(
+        `Detected ${transitions} significant entropy transitions, suggesting multiple data types or structures.`
+      );
     }
-    
+
     if (insights.length === 0) {
-      insights.push('No significant entropy patterns detected. The file has a relatively uniform data distribution.');
+      insights.push(
+        "No significant entropy patterns detected. The file has a relatively uniform data distribution."
+      );
     }
-    
+
     return insights;
   };
 
   return (
     <Container size="xl" py="xl">
       <Notifications />
-      
+
       <Paper p="lg" radius="md" withBorder mb="xl">
-        <Title order={1} ta="center" mb="md" style={{ fontSize: '2.5rem', fontWeight: 800, color: '#000000' }}>
+        <Title
+          order={1}
+          ta="center"
+          mb="md"
+          style={{ fontSize: "2.5rem", fontWeight: 800, color: "#000000" }}
+        >
           SQLite Forensic Artifact Analyzer
         </Title>
-        <Text ta="center" size="xl" mb="lg" style={{ fontWeight: 600, color: '#000000' }}>
-          Upload a SQLite database to validate, analyze, and optimize it for digital forensic investigations.
+        <Text
+          ta="center"
+          size="xl"
+          mb="lg"
+          style={{ fontWeight: 600, color: "#000000" }}
+        >
+          Upload a SQLite database to validate, analyze, and optimize it for
+          digital forensic investigations.
         </Text>
-        
+
         <Stack gap="md">
           <Group justify="center">
             <FileInput
@@ -1320,7 +1520,7 @@ export default function Home() {
               accept=".db,.sqlite,.sqlite3"
               clearable
               leftSection={<IconUpload size={16} />}
-              styles={{ input: { width: '350px', fontWeight: 500 } }}
+              styles={{ input: { width: "350px", fontWeight: 500 } }}
               disabled={loading}
             />
             <Button
@@ -1344,7 +1544,7 @@ export default function Home() {
               Clear Data
             </Button>
           </Group>
-          
+
           {loading && (
             <Box>
               <Text size="sm" ta="center" mb="xs">
@@ -1353,17 +1553,25 @@ export default function Home() {
               <Progress value={uploadProgress} striped animated />
             </Box>
           )}
-          
+
           {error && (
-            <Alert color="red" title="Error" icon={<IconAlertCircle size={16} />}>
+            <Alert
+              color="red"
+              title="Error"
+              icon={<IconAlertCircle size={16} />}
+            >
               {error}
             </Alert>
           )}
         </Stack>
       </Paper>
-      
+
       {results && (
-        <Tabs value={selectedTabValue} onChange={(value) => value && setSelectedTabValue(value)} mb="md">
+        <Tabs
+          value={selectedTabValue}
+          onChange={(value) => value && setSelectedTabValue(value)}
+          mb="md"
+        >
           <Tabs.List>
             <Tabs.Tab
               value="validation"
@@ -1377,16 +1585,10 @@ export default function Home() {
             >
               Forensic Analysis
             </Tabs.Tab>
-            <Tabs.Tab
-              value="structure"
-              leftSection={<IconTable size={16} />}
-            >
+            <Tabs.Tab value="structure" leftSection={<IconTable size={16} />}>
               Database Structure
             </Tabs.Tab>
-            <Tabs.Tab
-              value="hexeditor"
-              leftSection={<IconHexagon size={16} />}
-            >
+            <Tabs.Tab value="hexeditor" leftSection={<IconHexagon size={16} />}>
               Hex Editor
             </Tabs.Tab>
             <Tabs.Tab
@@ -1396,17 +1598,17 @@ export default function Home() {
               Visualization
             </Tabs.Tab>
           </Tabs.List>
-          
+
           <Box mt="md">
-            {selectedTabValue === 'validation' && renderValidationSection()}
-            {selectedTabValue === 'forensic' && renderForensicSection()}
-            {selectedTabValue === 'structure' && renderDatabaseStructure()}
-            {selectedTabValue === 'hexeditor' && fileId && (
+            {selectedTabValue === "validation" && renderValidationSection()}
+            {selectedTabValue === "forensic" && renderForensicSection()}
+            {selectedTabValue === "structure" && renderDatabaseStructure()}
+            {selectedTabValue === "hexeditor" && fileId && (
               <HexEditor fileId={fileId} initialOffset={jumpToOffset || 0} />
             )}
-            {selectedTabValue === 'visualization' && fileId && (
-              renderVisualizationSection()
-            )}
+            {selectedTabValue === "visualization" &&
+              fileId &&
+              renderVisualizationSection()}
           </Box>
         </Tabs>
       )}
