@@ -3,7 +3,6 @@
 <div align="center">
   
 ![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
-![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Electron](https://img.shields.io/badge/electron-36.0.0-teal.svg)
 ![React](https://img.shields.io/badge/react-19.0.0-blue.svg)
 ![Next.js](https://img.shields.io/badge/next.js-15.3.0-black.svg)
